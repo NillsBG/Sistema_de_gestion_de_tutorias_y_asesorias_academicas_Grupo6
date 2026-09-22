@@ -1,54 +1,82 @@
 let usuarioAutenticado = null;
 function procesarLogin(event) {
     event.preventDefault();
+    const correoInput = document.getElementById('login-correo');
+    const rolInput = document.querySelector('input[name="rol"]:checked');
 
-    const correo = document.getElementById('login-correo').value;
-    const rolSeleccionado = document.querySelector('input[name="rol"]:checked').value;
-
-    // Guardamos datos temporales para la sesión
+    if (!correoInput || !rolInput) return;
+    const correo = correoInput.value;
+    const rolSeleccionado = rolInput.value;
     usuarioAutenticado = {
         correo: correo,
         nombre: correo.split('@')[0],
         rol: rolSeleccionado
     };
-    // Ocultamos el Login y mostramos la barra superior 
-    document.getElementById('vista-login').classList.add('oculto');
-    document.getElementById('barra-usuario').classList.remove('oculto');
 
-    // Actualizamos el nombre y rol en pantalla
-    document.getElementById('info-usuario-nombre').textContent = usuarioAutenticado.nombre;
-    document.getElementById('info-usuario-rol').textContent = usuarioAutenticado.rol === 'estudiante' ? 'Estudiante' : 'Tutor';
+    const vistaLogin = document.getElementById('vista-login');
+    if (vistaLogin) vistaLogin.classList.add('oculto');
 
-    // Redirigimos a la vista según el rol seleccionado 
+    const encabezado = document.getElementById('encabezado');
+    if (encabezado) encabezado.classList.remove('oculto');
+
+    const elemNombre = document.getElementById('info-usuario-nombre');
+    const elemRol = document.getElementById('info-usuario-rol');
+
+    if (elemNombre) elemNombre.textContent = usuarioAutenticado.nombre;
+    if (elemRol) elemRol.textContent = usuarioAutenticado.rol === 'estudiante' ? 'Estudiante' : 'Tutor';
+
+    const vistaEstudiante = document.getElementById('vista-estudiante');
+    const vistaTutor = document.getElementById('vista-tutor');
+
     if (usuarioAutenticado.rol === 'estudiante') {
-        document.getElementById('vista-estudiante').classList.remove('oculto');
+        if (vistaEstudiante) vistaEstudiante.classList.remove('oculto');
+        if (vistaTutor) vistaTutor.classList.add('oculto');
     } else {
-        document.getElementById('vista-tutor').classList.remove('oculto');
+        if (vistaTutor) vistaTutor.classList.remove('oculto');
+        if (vistaEstudiante) vistaEstudiante.classList.add('oculto');
     }
 }
+
 function cerrarSesion() {
     usuarioAutenticado = null;
-    document.getElementById('vista-estudiante').classList.add('oculto');
-    document.getElementById('vista-tutor').classList.add('oculto');
-    document.getElementById('barra-usuario').classList.add('oculto');
-    document.getElementById('vista-login').classList.remove('oculto');
-    document.getElementById('form-login').reset();
+
+    const vistaEstudiante = document.getElementById('vista-estudiante');
+    const vistaTutor = document.getElementById('vista-tutor');
+    const encabezado = document.getElementById('encabezado');
+
+    if (vistaEstudiante) vistaEstudiante.classList.add('oculto');
+    if (vistaTutor) vistaTutor.classList.add('oculto');
+    if (encabezado) encabezado.classList.add('oculto');
+
+    const vistaLogin = document.getElementById('vista-login');
+    if (vistaLogin) vistaLogin.classList.remove('oculto');
+
+    const formLogin = document.getElementById('form-login');
+    if (formLogin) formLogin.reset();
 }
+
 function solicitarTutoria(materia, tutor, fecha) {
     alert(`Solicitud enviada exitosamente para la materia de "${materia}" con el tutor ${tutor}.`);
 }
+
 function cancelarSolicitud(boton) {
     if (confirm('¿Deseas cancelar esta solicitud de tutoría?')) {
-        boton.closest('tr').remove();
+        const fila = boton.closest('tr');
+        if (fila) fila.remove();
     }
 }
+
 function guardarDisponibilidad(event) {
     event.preventDefault();
     alert('Nuevo espacio de disponibilidad publicado correctamente.');
-    document.getElementById('form-disponibilidad').reset();
+    const form = document.getElementById('form-disponibilidad');
+    if (form) form.reset();
 }
+
 function cambiarEstadoSolicitud(boton, nuevoEstado) {
     const celdaAcciones = boton.closest('td');
+    if (!celdaAcciones) return;
+
     if (nuevoEstado === 'Aprobada') {
         celdaAcciones.innerHTML = `<span>Aprobada</span>`;
     } else {

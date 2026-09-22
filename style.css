@@ -1,34 +1,282 @@
 :root {
     --fuente-principal: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     --bg-principal: #fefdfc;
-    --bg-tarjeta: #f2f1ee;
+    --bg-tarjeta: #eae7e2;
+    --bg-campo: #e9e3d4;
+    --borde: #d8d0bf;
     --oro: #b79b63;
+    --oro-hover: #a3864e;
+    --texto-principal: #171717;
+    --texto-secundario: #373737;
+    --exito: #10b981;
+    --peligro: #ef4444;
+    --radio: 12px;
+    --transicion: all 0.2s ease-in-out;
 }
 
-* {
+html,
+body {
+    width: 100%;
+    height: 100vh;
+    margin: 0;
+    padding: 0;
+    background-color: var(--bg-principal);
+    color: var(--texto-principal);
+    font-family: var(--fuente-principal);
+    -webkit-font-smoothing: antialiased;
+    box-sizing: border-box;
+    overflow-x: hidden;
+}
+
+*,
+*:before,
+*:after {
     box-sizing: border-box;
     margin: 0;
     padding: 0;
-    font-family: var(--fuente-principal);
 }
 
 body {
-    background-color: var(--bg-principal);
-    color: var(--texto-principal);
-    line-height: 1.5;
-    -webkit-font-smoothing: antialiased;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .encabezado {
     background-color: var(--bg-tarjeta);
     border-bottom: 1px solid var(--borde);
-    padding: 1rem 2rem;
+    padding: 0.85rem 2rem;
     display: flex;
     justify-content: space-between;
     align-items: center;
     position: sticky;
     top: 0;
     z-index: 100;
+    width: 100%;
+    flex-shrink: 0;
+}
+
+.contenedor-principal {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 1rem 1.5rem;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.contenedor-principal.modo-login {
+    width: 100%;
+    max-width: 480px;
+    margin: 1.5rem auto;
+    padding: 0 1rem;
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.vista-login {
+    width: 100%;
+    max-width: 420px;
+    margin: 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding-top: 0.5rem;
+}
+
+.encabezado-empresa {
+    text-align: center;
+    margin-top: 0;
+    margin-bottom: 0.85rem;
+    padding-top: 0;
+}
+
+.titulo-empresa {
+    font-size: 45px;
+    font-weight: 800;
+    color: var(--texto-principal);
+    letter-spacing: -0.5px;
+    line-height: 1.1;
+    margin-top: 0;
+    padding-top: 0;
+}
+
+.subtitulo-empresa {
+    font-size: 0.85rem;
+    color: var(--oro);
+    font-weight: 600;
+    margin-top: 0.2rem;
+    letter-spacing: 0.3px;
+}
+
+.tarjeta {
+    background-color: var(--bg-tarjeta);
+    border: 1px solid var(--borde);
+    border-radius: var(--radio);
+    padding: 1.5rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    width: 100%;
+}
+
+.tarjeta-login {
+    width: 100%;
+    max-width: 500px;
+    margin: 0 auto;
+    padding: 1.5rem 1.75rem;
+}
+
+.titulo-seccion {
+    font-size: 1.35rem;
+    font-weight: 700;
+    margin-bottom: 0.25rem;
+    color: var(--texto-principal);
+}
+
+.subtitulo-seccion {
+    font-size: 0.825rem;
+    color: var(--texto-secundario);
+    margin-bottom: 1rem;
+}
+
+.subtitulo-bloque {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+    color: var(--texto-principal);
+}
+
+.grupo-campo {
+    margin-bottom: 0.9rem;
+    width: 100%;
+}
+
+.etiqueta-campo {
+    display: block;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--texto-secundario);
+    margin-bottom: 0.35rem;
+}
+
+.campo-entrada {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    background-color: var(--bg-campo);
+    border: 1px solid var(--borde);
+    color: var(--texto-principal);
+    padding: 0.65rem 0.85rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-family: inherit;
+    transition: var(--transicion);
+    display: block;
+}
+
+.campo-entrada::placeholder {
+    color: #737373;
+}
+
+.campo-entrada:focus {
+    outline: none;
+    border-color: var(--oro);
+    box-shadow: 0 0 0 3px rgba(183, 155, 99, 0.2);
+}
+
+.selector-rol {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+    width: 100%;
+}
+
+.opcion-rol {
+    border: 1px solid var(--borde);
+    background-color: var(--bg-campo);
+    padding: 0.55rem;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    font-size: 0.825rem;
+    font-weight: 600;
+    color: var(--texto-principal);
+    transition: var(--transicion);
+}
+
+.opcion-rol:hover {
+    border-color: var(--oro);
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.65rem 1.1rem;
+    border-radius: 8px;
+    font-size: 0.875rem;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    font-family: inherit;
+    transition: var(--transicion);
+}
+
+.btn-oro {
+    background-color: var(--oro);
+    color: #ffffff;
+}
+
+.btn-oro:hover {
+    background-color: var(--oro-hover);
+}
+
+.btn-secundario {
+    background-color: transparent;
+    border: 1px solid var(--borde);
+    color: var(--texto-secundario);
+}
+
+.btn-secundario:hover {
+    color: var(--texto-principal);
+    border-color: var(--oro);
+}
+
+.btn-peligro-suave {
+    background-color: rgba(239, 68, 68, 0.12);
+    color: var(--peligro);
+    border: 1px solid rgba(239, 68, 68, 0.25);
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+}
+
+.btn-peligro-suave:hover {
+    background-color: rgba(239, 68, 68, 0.22);
+}
+
+.btn-exito-suave {
+    background-color: rgba(16, 185, 129, 0.12);
+    color: var(--exito);
+    border: 1px solid rgba(16, 185, 129, 0.25);
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+}
+
+.btn-exito-suave:hover {
+    background-color: rgba(16, 185, 129, 0.22);
 }
 
 .logotipo {
@@ -38,26 +286,26 @@ body {
 }
 
 .icono-logo {
-    width: 40px;
-    height: 40px;
-    background: linear-gradient(135deg, var(--oro), #b79b63);
-    color: #171717;
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, var(--oro), #8a6812);
+    color: #ffffff;
     border-radius: var(--radio);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 1.2rem;
+    font-size: 1.1rem;
 }
 
 .titulo-logo h1 {
-    font-size: 1.25rem;
+    font-size: 1.15rem;
     font-weight: 700;
     color: var(--texto-principal);
     line-height: 1;
 }
 
 .titulo-logo span {
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     color: var(--oro);
     text-transform: uppercase;
     letter-spacing: 1px;
@@ -72,177 +320,19 @@ body {
 
 .nombre-usuario {
     font-weight: 600;
-    font-size: 0.9rem;
+    font-size: 0.875rem;
     text-transform: capitalize;
+    color: var(--texto-principal);
 }
 
 .badge-rol {
-    background-color: rgba(197, 155, 39, 0.15);
+    background-color: rgba(183, 155, 99, 0.15);
     color: var(--oro);
-    border: 1px solid rgba(197, 155, 39, 0.3);
-    padding: 0.25rem 0.75rem;
+    border: 1px solid rgba(183, 155, 99, 0.3);
+    padding: 0.2rem 0.65rem;
     border-radius: 20px;
-    font-size: 0.8rem;
+    font-size: 0.75rem;
     font-weight: 600;
-}
-
-.contenedor-principal {
-    max-width: 1200px;
-    width: 100%;
-    margin: 2rem auto;
-    padding: 0 1.5rem;
-    flex-grow: 1;
-}
-
-.tarjeta {
-    background-color: var(--bg-tarjeta);
-    border: 1px solid var(--borde);
-    border-radius: var(--radio);
-    padding: 1.75rem;
-    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
-}
-
-.tarjeta-login {
-    max-width: 420px;
-    margin: 3rem auto;
-}
-
-.titulo-seccion {
-    font-size: 1.5rem;
-    font-weight: 700;
-    margin-bottom: 0.5rem;
-    color: var(--texto-principal);
-}
-
-.subtitulo-seccion {
-    font-size: 0.875rem;
-    color: var(--texto-secundario);
-    margin-bottom: 1.25rem;
-}
-
-.subtitulo-bloque {
-    font-size: 1.1rem;
-    font-weight: 700;
-    margin-bottom: 0.75rem;
-    color: var(--texto-principal);
-}
-
-.grupo-campo {
-    margin-bottom: 1.25rem;
-}
-
-.etiqueta-campo {
-    display: block;
-    font-size: 0.8rem;
-    font-weight: 600;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-    color: var(--texto-secundario);
-    margin-bottom: 0.5rem;
-}
-
-.campo-entrada {
-    width: 100%;
-    background-color: var(--bg-campo);
-    border: 1px solid var(--borde);
-    color: var(--texto-principal);
-    padding: 0.75rem 1rem;
-    border-radius: 8px;
-    font-size: 0.95rem;
-    transition: var(--transicion);
-}
-
-.campo-entrada:focus {
-    outline: none;
-    border-color: #e9e3d4;
-    background-color: #e9e3d4;
-    color: #171717;
-    transition: .5s;
-}
-
-.selector-rol {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 0.75rem;
-}
-
-.opcion-rol {
-    border: 1px solid var(--borde);
-    background-color: var(--bg-campo);
-    padding: 0.75rem;
-    border-radius: 8px;
-    cursor: pointer;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    font-size: 0.875rem;
-    font-weight: 600;
-    transition: var(--transicion);
-}
-
-.opcion-rol:hover {
-    border-color: var(--oro);
-}
-
-.btn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 0.5rem;
-    padding: 0.75rem 1.25rem;
-    border-radius: 8px;
-    font-size: 0.9rem;
-    font-weight: 700;
-    cursor: pointer;
-    border: none;
-    transition: var(--transicion);
-}
-
-.btn-oro {
-    background-color: var(--oro);
-    color: #171717;
-}
-
-.btn-oro:hover {
-    background-color: #171717;
-    color: #b79b63;
-    transition: .5s;
-}
-
-.btn-secundario {
-    background-color: transparent;
-    border: 1px solid var(--borde);
-    color: var(--texto-secundario);
-}
-
-.btn-secundario:hover {
-    color: var(--texto-principal);
-    border-color: var(--texto-secundario);
-}
-
-.btn-peligro-suave {
-    background-color: rgba(239, 68, 68, 0.15);
-    color: var(--peligro);
-    border: 1px solid rgba(239, 68, 68, 0.3);
-    padding: 0.4rem 0.8rem;
-    font-size: 0.8rem;
-}
-
-.btn-peligro-suave:hover {
-    background-color: rgba(239, 68, 68, 0.25);
-}
-
-.btn-exito-suave {
-    background-color: rgba(16, 185, 129, 0.15);
-    color: var(--exito);
-    border: 1px solid rgba(16, 185, 129, 0.3);
-    padding: 0.4rem 0.8rem;
-    font-size: 0.8rem;
-}
-
-.btn-exito-suave:hover {
-    background-color: rgba(16, 185, 129, 0.25);
 }
 
 .grid-filtros {
@@ -295,7 +385,7 @@ body {
     font-size: 0.75rem;
     font-weight: 700;
     color: var(--oro);
-    background-color: rgba(197, 155, 39, 0.1);
+    background-color: rgba(183, 155, 99, 0.15);
     padding: 0.2rem 0.6rem;
     border-radius: 4px;
 }
@@ -306,9 +396,10 @@ body {
 }
 
 .nombre-tutor {
-    font-size: 1.1rem;
+    font-size: 1.05rem;
     font-weight: 700;
     margin-top: 0.5rem;
+    color: var(--texto-principal);
 }
 
 .detalles-horario {
@@ -329,48 +420,66 @@ body {
     width: 100%;
     border-collapse: collapse;
     text-align: left;
-    font-size: 0.9rem;
+    font-size: 0.875rem;
 }
 
 .tabla-datos th {
     background-color: var(--bg-campo);
     color: var(--texto-secundario);
-    padding: 0.85rem 1rem;
-    font-size: 0.75rem;
+    padding: 0.75rem 0.9rem;
+    font-size: 0.725rem;
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }
 
 .tabla-datos td {
-    padding: 1rem;
+    padding: 0.85rem 0.9rem;
     border-bottom: 1px solid var(--borde);
     color: var(--texto-principal);
 }
 
 .estado-badge {
-    padding: 0.25rem 0.65rem;
+    padding: 0.2rem 0.6rem;
     border-radius: 12px;
-    font-size: 0.75rem;
+    font-size: 0.725rem;
     font-weight: 600;
     display: inline-block;
 }
 
 .estado-pendiente {
-    color: #f59e0b;
-    background-color: rgba(245, 158, 11, 0.1);
-    border: 1px solid rgba(245, 158, 11, 0.2);
+    color: #d97706;
+    background-color: rgba(217, 119, 6, 0.12);
+    border: 1px solid rgba(217, 119, 6, 0.25);
 }
 
 .estado-aprobado {
     color: var(--exito);
-    background-color: rgba(16, 185, 129, 0.1);
-    border: 1px solid rgba(16, 185, 129, 0.2);
+    background-color: rgba(16, 185, 129, 0.12);
+    border: 1px solid rgba(16, 185, 129, 0.25);
 }
 
 .estado-rechazado {
     color: var(--peligro);
-    background-color: rgba(239, 68, 68, 0.1);
-    border: 1px solid rgba(239, 68, 68, 0.2);
+    background-color: rgba(239, 68, 68, 0.12);
+    border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+.pie-pagina {
+    width: 100%;
+    background-color: var(--bg-tarjeta);
+    border-top: 1px solid var(--borde);
+    padding: 0.85rem 1rem;
+    text-align: center;
+    font-size: 0.775rem;
+    color: var(--texto-secundario);
+    margin-top: auto;
+    flex-shrink: 0;
+}
+
+.creditos-equipo {
+    margin-top: 0.2rem;
+    color: var(--texto-principal);
+    font-weight: 600;
 }
 
 .oculto {
@@ -398,7 +507,7 @@ body {
 }
 
 .mb-lg {
-    margin-bottom: 2rem;
+    margin-bottom: 1.5rem;
 }
 
 .mt-sm {
@@ -411,32 +520,142 @@ body {
     justify-content: center;
 }
 
-.pie-pagina {
-    background-color: var(--bg-tarjeta);
-    border-top: 1px solid var(--borde);
-    padding: 40px;
-    text-align: center;
-    font-size: 0.8rem;
-    color: var(--texto-secundario);
-    margin-top: auto;
-}
-
-.creditos-equipo {
-    margin-top: 0.25rem;
-    color: var(--texto-principal);
-    font-weight: 600;
-}
-
 @media (max-width: 768px) {
     .encabezado {
-        padding: 1rem;
+        padding: 0.75rem 1rem;
     }
 
     .contenedor-principal {
-        padding: 0 1rem;
+        padding: 0.75rem 1rem;
     }
 
     .grid-dos-columnas {
         grid-template-columns: 1fr;
+    }
+
+    .titulo-empresa {
+        font-size: 1.8rem;
+    }
+}
+
+@media (max-width: 1024px) {
+    .contenedor-principal {
+        max-width: 92%;
+        padding: 1rem;
+    }
+
+    /* El panel del tutor pasa de 2 columnas a 1 apilada para aprovechar el ancho */
+    .grid-dos-columnas {
+        grid-template-columns: 1fr;
+        gap: 1.25rem;
+    }
+
+    .grid-filtros {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+@media (max-width: 600px) {
+
+    html,
+    body {
+        height: auto;
+        min-height: 100vh;
+    }
+
+    /* Ajuste de márgenes y paddings en el login para pantallas táctiles */
+    .contenedor-principal.modo-login {
+        padding-top: 0.5rem;
+        padding-bottom: 0.5rem;
+        padding-left: 0.75rem;
+        padding-right: 0.75rem;
+        justify-content: flex-start;
+    }
+
+    .vista-login,
+    .tarjeta-login {
+        width: 100%;
+        max-width: 100%;
+        margin-top: 0;
+        padding-top: 0.25rem;
+    }
+
+    .encabezado-empresa {
+        margin-top: 0;
+        margin-bottom: 0.6rem;
+        padding-top: 0;
+    }
+
+    .titulo-empresa {
+        font-size: 1.75rem;
+        margin-top: 0;
+    }
+
+    .subtitulo-empresa {
+        font-size: 0.8rem;
+    }
+
+    /* Barra superior compacta para móviles */
+    .encabezado {
+        padding: 0.75rem 1rem;
+        flex-direction: row;
+    }
+
+    .titulo-logo h1 {
+        font-size: 1rem;
+    }
+
+    .titulo-logo span {
+        display: none;
+        /* Oculta el subtítulo en pantallas muy angostas */
+    }
+
+    .barra-usuario {
+        gap: 0.5rem;
+    }
+
+    .nombre-usuario {
+        font-size: 0.8rem;
+        max-width: 110px;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    /* Todas las tablas pasan a 1 sola columna en vertical */
+    .grid-filtros,
+    .grid-tarjetas,
+    .grid-dos-campos {
+        grid-template-columns: 1fr;
+    }
+
+    .tarjeta {
+        padding: 1.15rem 1rem;
+    }
+
+    .btn {
+        padding: 0.6rem 0.9rem;
+        font-size: 0.825rem;
+    }
+
+    /* Tablas adaptables con desplazamiento suave */
+    .tabla-datos {
+        font-size: 0.8rem;
+    }
+
+    .tabla-datos th,
+    .tabla-datos td {
+        padding: 0.65rem 0.5rem;
+    }
+}
+
+@media (max-width: 380px) {
+    .selector-rol {
+        grid-template-columns: 1fr;
+        /* Apila las opciones de perfil */
+    }
+
+    .titulo-empresa {
+        font-size: 1.5rem;
     }
 }

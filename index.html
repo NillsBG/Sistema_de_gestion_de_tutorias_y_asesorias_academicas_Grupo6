@@ -4,51 +4,59 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>EduTutor | Sistema de Gestión de Tutorías Académicas</title>
+    <title>Sistema de Gestión de Tutorías Académicas</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
 
-    <!-- Encabezadoo -->
-    <header class="encabezado">
+    <!-- Narvar (Se activa al iniciar sesión) -->
+    <header id="encabezado" class="encabezado oculto">
         <div class="logotipo">
             <div class="icono-logo">
                 <i class="fa-solid fa-graduation-cap"></i>
             </div>
             <div class="titulo-logo">
-                <h1>Sistema de gestión de tutorías y asesorías académicas</h1>
+                <h1>Sistema de Gestión de Tutorías Académicas</h1>
                 <span>Universidad Mariano Gálvez</span>
             </div>
         </div>
 
-        <!-- Se va a mostrar únicamente al haber iniciado sesión de forma correctaa -->
-        <div id="barra-usuario" class="barra-usuario oculto">
+        <!-- Barra de Usuario en Sesión -->
+        <div id="barra-usuario" class="barra-usuario">
             <span id="info-usuario-nombre" class="nombre-usuario"></span>
             <span id="info-usuario-rol" class="badge-rol"></span>
-            <button onclick="cerrarSesion()" class="btn btn-secundario">
+            <button type="button" onclick="cerrarSesion()" class="btn btn-secundario">
                 <i class="fa-solid fa-right-from-bracket"></i> Salir
             </button>
         </div>
     </header>
 
-    <!-- Contenedor de las vistas principales -->
+    <!-- Contenedor de vistas principales -->
     <main class="contenedor-principal">
 
-        <!-- Vista del Login -->
+        <!--  Vista de login sin narvar -->
         <section id="vista-login">
+
+            <!-- Título del Sistema -->
+            <div class="encabezado-empresa">
+                <h1 id="titulo-empresa" class="titulo-empresa">Sistema de Gestión de Tutorías Académicas</h1>
+                <p class="subtitulo-empresa">¿Estás listo para iniciar una nueva experiencia educativa?</p>
+            </div>
+
+            <!-- Tarjeta del Formulario de Login -->
             <div class="tarjeta tarjeta-login">
                 <h2 class="titulo-seccion texto-centro">Iniciar Sesión</h2>
-                <p class="subtitulo-seccion texto-centro">Ingresa tus credenciales institucionales para acceder a la
-                    plataforma.
-                </p>
+                <p class="subtitulo-seccion texto-centro">Ingresa tus credenciales institucionales para acceder.</p>
 
                 <form id="form-login" onsubmit="procesarLogin(event)">
                     <div class="grupo-campo">
-                        <label class="etiqueta-campo">Tipo de Usuario</label>
+                        <label class="etiqueta-campo">Tipo de Perfil</label>
                         <div class="selector-rol">
                             <label class="opcion-rol">
                                 <input type="radio" name="rol" value="estudiante" checked> Estudiante
@@ -62,7 +70,7 @@
                     <div class="grupo-campo">
                         <label for="login-correo" class="etiqueta-campo">Correo Electrónico</label>
                         <input type="email" id="login-correo" class="campo-entrada" required
-                            placeholder="usuario@umg.edu.gt">
+                            placeholder="mcorzo@umg.edu.gt">
                     </div>
 
                     <div class="grupo-campo">
@@ -77,7 +85,7 @@
             </div>
         </section>
 
-        <!-- 2. Vista usuario modo estudiante -->
+        <!--  Vista protal del estudiante -->
         <section id="vista-estudiante" class="oculto">
             <div class="tarjeta mb-lg">
                 <h2 class="titulo-seccion">Portal del Estudiante</h2>
@@ -104,8 +112,6 @@
 
             <h3 class="subtitulo-bloque">Espacios Disponibles para Citas</h3>
             <div id="contenedor-disponibilidad" class="grid-tarjetas mb-lg">
-
-                <!-- Tarjeta de disponibilidadd -->
                 <div class="tarjeta-disponibilidad">
                     <div>
                         <div class="encabezado-materia">
@@ -116,37 +122,17 @@
                         <div class="detalles-horario">
                             <div><i class="fa-regular fa-calendar"></i> Jueves, 25 de Septiembre</div>
                             <div><i class="fa-solid fa-clock"></i> 10:00 AM - 10:45 AM</div>
-                            <div><i class="fa-solid fa-location-dot"></i> Laboratorio 3 </div>
+                            <div><i class="fa-solid fa-location-dot"></i> Laboratorio 3 / Google Meet</div>
                         </div>
                     </div>
-                    <button onclick="solicitarTutoria('Desarrollo Web', 'Ing. Leonel Domínguez', '25/09/2026 10:00 AM')"
+                    <button type="button"
+                        onclick="solicitarTutoria('Desarrollo Web', 'Ing. Leonel Domínguez', '25/09/2026 10:00 AM')"
                         class="btn btn-oro ancho-total">
                         Solicitar Tutoría
                     </button>
                 </div>
-
-                <!-- Tarjeta de disponibilidadd 2 -->
-                <div class="tarjeta-disponibilidad">
-                    <div>
-                        <div class="encabezado-materia">
-                            <span class="etiqueta-materia">Bases de Datos</span>
-                            <span class="duracion-materia"><i class="fa-regular fa-clock"></i> 60 min</span>
-                        </div>
-                        <h4 class="nombre-tutor">Inga. Velveth Chavez</h4>
-                        <div class="detalles-horario">
-                            <div><i class="fa-regular fa-calendar"></i> Viernes, 26 de Septiembre</div>
-                            <div><i class="fa-solid fa-clock"></i> 03:00 PM - 04:00 PM</div>
-                            <div><i class="fa-solid fa-location-dot"></i> Aula Virtual </div>
-                        </div>
-                    </div>
-                    <button onclick="solicitarTutoria('Bases de Datos', 'Inga. Velveth Chávez', '26/09/2026 03:00 PM')"
-                        class="btn btn-oro ancho-total">
-                        Solicitar Tutoría
-                    </button>
-                </div>
-
             </div>
-            <!-- Esta parte es solo una prueba de como se vera la seccion de la tarjeta ya que sera de forma dinamica, segun las tutorias que seleccione el usuario en el momento... -->
+
             <div class="tarjeta">
                 <h3 class="subtitulo-bloque">Mis Solicitudes de Tutoría</h3>
                 <p class="subtitulo-seccion">Estado actual de las citas que has reservado.</p>
@@ -169,7 +155,7 @@
                                 <td>25/09/2026 - 10:00 AM</td>
                                 <td><span class="estado-badge estado-pendiente">Pendiente</span></td>
                                 <td class="texto-derecha">
-                                    <button class="btn btn-peligro-suave"
+                                    <button type="button" class="btn btn-peligro-suave"
                                         onclick="cancelarSolicitud(this)">Cancelar</button>
                                 </td>
                             </tr>
@@ -179,11 +165,10 @@
             </div>
         </section>
 
-        <!-- 3. Vista del portal en modo tutor -->
+        <!--  Vista del portal de tutor-->
         <section id="vista-tutor" class="oculto">
             <div class="grid-dos-columnas">
 
-                <!-- Columna Izquierda Formulario para publicar horarios -->
                 <div class="tarjeta">
                     <h3 class="subtitulo-bloque"><i class="fa-solid fa-plus-circle icono-oro"></i> Abrir Disponibilidad
                     </h3>
@@ -215,8 +200,6 @@
                     </form>
                 </div>
 
-                <!-- Columna Derecha Gestión de solicitudes recibidas -->
-                <!-- Esta seccion es una vista de ejemplo ya que el final sera dinamico segun lo que seleccione el usuario en ese momento... -->
                 <div class="tarjeta">
                     <h3 class="subtitulo-bloque">Solicitudes Recibidas</h3>
                     <p class="subtitulo-seccion">Gestiona las reservas solicitadas por los alumnos.</p>
@@ -237,9 +220,9 @@
                                     <td>Desarrollo Web</td>
                                     <td>25/09/2026 - 10:00 AM</td>
                                     <td class="texto-centro contenedor-acciones">
-                                        <button class="btn btn-exito-suave"
+                                        <button type="button" class="btn btn-exito-suave"
                                             onclick="cambiarEstadoSolicitud(this, 'Aprobada')">Aceptar</button>
-                                        <button class="btn btn-peligro-suave"
+                                        <button type="button" class="btn btn-peligro-suave"
                                             onclick="cambiarEstadoSolicitud(this, 'Rechazada')">Rechazar</button>
                                     </td>
                                 </tr>
@@ -253,13 +236,12 @@
 
     </main>
 
-    <!-- Pie de pagina  -->
+    <!-- Pie de pagina -->
     <footer class="pie-pagina">
         <p>Universidad Mariano Gálvez de Guatemala · Facultad de Ingeniería en Sistemas</p>
-        <p class="creditos-equipo">Proyecto Final - Desarrollo Web Grupo 6</p>
+        <p class="creditos-equipo">Proyecto Final - Desarrollo Web (Grupo 6)</p>
     </footer>
 
-    <!-- LÓGICA DE INTERACTIVIDAD EN ARCHIVO EXTERNO -->
     <script src="app.js"></script>
 
 </body>
