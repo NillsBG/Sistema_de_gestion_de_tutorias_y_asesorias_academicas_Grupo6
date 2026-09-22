@@ -1,35 +1,267 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Sistema de Gestión de Tutorías - Prueba</title>
+    <title>EduTutor | Sistema de Gestión de Tutorías Académicas</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin="" />
+    <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
 
-    <!-- Encabezado Principal -->
-    <header>
-        <h1>Sistema de Gestión de Tutorías y Asesorías Académicas</h1>
-        <p>Universidad Mariano Gálvez de Guatemala - Grupo 6</p>
+    <!-- Encabezadoo -->
+    <header class="encabezado">
+        <div class="logotipo">
+            <div class="icono-logo">
+                <i class="fa-solid fa-graduation-cap"></i>
+            </div>
+            <div class="titulo-logo">
+                <h1>Sistema de gestión de tutorías y asesorías académicas</h1>
+                <span>Universidad Mariano Gálvez</span>
+            </div>
+        </div>
+
+        <!-- Se va a mostrar únicamente al haber iniciado sesión de forma correctaa -->
+        <div id="barra-usuario" class="barra-usuario oculto">
+            <span id="info-usuario-nombre" class="nombre-usuario"></span>
+            <span id="info-usuario-rol" class="badge-rol"></span>
+            <button onclick="cerrarSesion()" class="btn btn-secundario">
+                <i class="fa-solid fa-right-from-bracket"></i> Salir
+            </button>
+        </div>
     </header>
 
-    <!-- Contenido Principal -->
-    <main>
-        <section>
-            <h2>Prueba de Estructura Inicial</h2>
-            <p>Si estás viendo esta página en tu navegador, la maquetación base de HTML5 está funcionando correctamente.</p>
-            
-            <!-- Botón de prueba de interacción -->
-            <button onclick="alert('¡El entorno local de HTML y JavaScript responde bien!')">
-                Probar Interacción JS
-            </button>
+    <!-- Contenedor de las vistas principales -->
+    <main class="contenedor-principal">
+
+        <!-- Vista del Login -->
+        <section id="vista-login">
+            <div class="tarjeta tarjeta-login">
+                <h2 class="titulo-seccion texto-centro">Iniciar Sesión</h2>
+                <p class="subtitulo-seccion texto-centro">Ingresa tus credenciales institucionales para acceder a la
+                    plataforma.
+                </p>
+
+                <form id="form-login" onsubmit="procesarLogin(event)">
+                    <div class="grupo-campo">
+                        <label class="etiqueta-campo">Tipo de Usuario</label>
+                        <div class="selector-rol">
+                            <label class="opcion-rol">
+                                <input type="radio" name="rol" value="estudiante" checked> Estudiante
+                            </label>
+                            <label class="opcion-rol">
+                                <input type="radio" name="rol" value="tutor"> Tutor
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="grupo-campo">
+                        <label for="login-correo" class="etiqueta-campo">Correo Electrónico</label>
+                        <input type="email" id="login-correo" class="campo-entrada" required
+                            placeholder="usuario@umg.edu.gt">
+                    </div>
+
+                    <div class="grupo-campo">
+                        <label for="login-clave" class="etiqueta-campo">Contraseña</label>
+                        <input type="password" id="login-clave" class="campo-entrada" required placeholder="••••••••">
+                    </div>
+
+                    <button type="submit" class="btn btn-oro ancho-total">
+                        <i class="fa-solid fa-right-to-bracket"></i> Ingresar al Sistema
+                    </button>
+                </form>
+            </div>
         </section>
+
+        <!-- 2. Vista usuario modo estudiante -->
+        <section id="vista-estudiante" class="oculto">
+            <div class="tarjeta mb-lg">
+                <h2 class="titulo-seccion">Portal del Estudiante</h2>
+                <p class="subtitulo-seccion">Consulta la oferta de tutorías disponibles y gestiona tus citas académicas.
+                </p>
+
+                <div class="grid-filtros">
+                    <div>
+                        <label for="buscar-texto" class="etiqueta-campo">Buscar por Tutor o Curso</label>
+                        <input type="text" id="buscar-texto" class="campo-entrada"
+                            placeholder="Ej. Desarrollo Web, Ing. Domínguez...">
+                    </div>
+                    <div>
+                        <label for="filtrar-materia" class="etiqueta-campo">Filtrar por Materia</label>
+                        <select id="filtrar-materia" class="campo-entrada">
+                            <option value="">Todas las materias</option>
+                            <option value="Desarrollo Web">Desarrollo Web</option>
+                            <option value="Bases de Datos">Bases de Datos</option>
+                            <option value="Análisis de Sistemas">Análisis de Sistemas</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <h3 class="subtitulo-bloque">Espacios Disponibles para Citas</h3>
+            <div id="contenedor-disponibilidad" class="grid-tarjetas mb-lg">
+
+                <!-- Tarjeta de disponibilidadd -->
+                <div class="tarjeta-disponibilidad">
+                    <div>
+                        <div class="encabezado-materia">
+                            <span class="etiqueta-materia">Desarrollo Web</span>
+                            <span class="duracion-materia"><i class="fa-regular fa-clock"></i> 45 min</span>
+                        </div>
+                        <h4 class="nombre-tutor">Ing. Leonel Domínguez</h4>
+                        <div class="detalles-horario">
+                            <div><i class="fa-regular fa-calendar"></i> Jueves, 25 de Septiembre</div>
+                            <div><i class="fa-solid fa-clock"></i> 10:00 AM - 10:45 AM</div>
+                            <div><i class="fa-solid fa-location-dot"></i> Laboratorio 3 </div>
+                        </div>
+                    </div>
+                    <button onclick="solicitarTutoria('Desarrollo Web', 'Ing. Leonel Domínguez', '25/09/2026 10:00 AM')"
+                        class="btn btn-oro ancho-total">
+                        Solicitar Tutoría
+                    </button>
+                </div>
+
+                <!-- Tarjeta de disponibilidadd 2 -->
+                <div class="tarjeta-disponibilidad">
+                    <div>
+                        <div class="encabezado-materia">
+                            <span class="etiqueta-materia">Bases de Datos</span>
+                            <span class="duracion-materia"><i class="fa-regular fa-clock"></i> 60 min</span>
+                        </div>
+                        <h4 class="nombre-tutor">Inga. Velveth Chavez</h4>
+                        <div class="detalles-horario">
+                            <div><i class="fa-regular fa-calendar"></i> Viernes, 26 de Septiembre</div>
+                            <div><i class="fa-solid fa-clock"></i> 03:00 PM - 04:00 PM</div>
+                            <div><i class="fa-solid fa-location-dot"></i> Aula Virtual </div>
+                        </div>
+                    </div>
+                    <button onclick="solicitarTutoria('Bases de Datos', 'Inga. Velveth Chávez', '26/09/2026 03:00 PM')"
+                        class="btn btn-oro ancho-total">
+                        Solicitar Tutoría
+                    </button>
+                </div>
+
+            </div>
+            <!-- Esta parte es solo una prueba de como se vera la seccion de la tarjeta ya que sera de forma dinamica, segun las tutorias que seleccione el usuario en el momento... -->
+            <div class="tarjeta">
+                <h3 class="subtitulo-bloque">Mis Solicitudes de Tutoría</h3>
+                <p class="subtitulo-seccion">Estado actual de las citas que has reservado.</p>
+
+                <div class="contenedor-tabla">
+                    <table class="tabla-datos">
+                        <thead>
+                            <tr>
+                                <th>Materia</th>
+                                <th>Tutor</th>
+                                <th>Fecha y Hora</th>
+                                <th>Estado</th>
+                                <th class="texto-derecha">Acción</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabla-solicitudes-estudiante">
+                            <tr>
+                                <td class="texto-resaltado">Desarrollo Web</td>
+                                <td>Ing. Leonel Domínguez</td>
+                                <td>25/09/2026 - 10:00 AM</td>
+                                <td><span class="estado-badge estado-pendiente">Pendiente</span></td>
+                                <td class="texto-derecha">
+                                    <button class="btn btn-peligro-suave"
+                                        onclick="cancelarSolicitud(this)">Cancelar</button>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. Vista del portal en modo tutor -->
+        <section id="vista-tutor" class="oculto">
+            <div class="grid-dos-columnas">
+
+                <!-- Columna Izquierda Formulario para publicar horarios -->
+                <div class="tarjeta">
+                    <h3 class="subtitulo-bloque"><i class="fa-solid fa-plus-circle icono-oro"></i> Abrir Disponibilidad
+                    </h3>
+                    <p class="subtitulo-seccion">Publica un nuevo espacio de atención para tus estudiantes.</p>
+
+                    <form id="form-disponibilidad" onsubmit="guardarDisponibilidad(event)">
+                        <div class="grupo-campo">
+                            <label for="disp-materia" class="etiqueta-campo">Materia / Curso</label>
+                            <input type="text" id="disp-materia" class="campo-entrada" required
+                                placeholder="Ej. Desarrollo Web">
+                        </div>
+                        <div class="grupo-campo">
+                            <label for="disp-fecha" class="etiqueta-campo">Fecha</label>
+                            <input type="date" id="disp-fecha" class="campo-entrada" required>
+                        </div>
+                        <div class="grid-dos-campos grupo-campo">
+                            <div>
+                                <label for="disp-inicio" class="etiqueta-campo">Hora Inicio</label>
+                                <input type="time" id="disp-inicio" class="campo-entrada" required>
+                            </div>
+                            <div>
+                                <label for="disp-fin" class="etiqueta-campo">Hora Fin</label>
+                                <input type="time" id="disp-fin" class="campo-entrada" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-oro ancho-total mt-sm">
+                            Publicar Horario
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Columna Derecha Gestión de solicitudes recibidas -->
+                <!-- Esta seccion es una vista de ejemplo ya que el final sera dinamico segun lo que seleccione el usuario en ese momento... -->
+                <div class="tarjeta">
+                    <h3 class="subtitulo-bloque">Solicitudes Recibidas</h3>
+                    <p class="subtitulo-seccion">Gestiona las reservas solicitadas por los alumnos.</p>
+
+                    <div class="contenedor-tabla">
+                        <table class="tabla-datos">
+                            <thead>
+                                <tr>
+                                    <th>Estudiante</th>
+                                    <th>Materia</th>
+                                    <th>Fecha y Hora</th>
+                                    <th class="texto-centro">Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tabla-solicitudes-tutor">
+                                <tr>
+                                    <td class="texto-resaltado">Mario Corzo</td>
+                                    <td>Desarrollo Web</td>
+                                    <td>25/09/2026 - 10:00 AM</td>
+                                    <td class="texto-centro contenedor-acciones">
+                                        <button class="btn btn-exito-suave"
+                                            onclick="cambiarEstadoSolicitud(this, 'Aprobada')">Aceptar</button>
+                                        <button class="btn btn-peligro-suave"
+                                            onclick="cambiarEstadoSolicitud(this, 'Rechazada')">Rechazar</button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+            </div>
+        </section>
+
     </main>
 
-    <!-- Pie de Página -->
-    <footer>
-        <p>&copy; 2026 - Desarrollo Web | Caso #1</p>
+    <!-- Pie de pagina  -->
+    <footer class="pie-pagina">
+        <p>Universidad Mariano Gálvez de Guatemala · Facultad de Ingeniería en Sistemas</p>
+        <p class="creditos-equipo">Proyecto Final - Desarrollo Web Grupo 6</p>
     </footer>
 
+    <!-- LÓGICA DE INTERACTIVIDAD EN ARCHIVO EXTERNO -->
+    <script src="app.js"></script>
+
 </body>
+
 </html>

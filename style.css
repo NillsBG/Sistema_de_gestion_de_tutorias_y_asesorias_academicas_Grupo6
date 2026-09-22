@@ -1,0 +1,442 @@
+:root {
+    --fuente-principal: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    --bg-principal: #fefdfc;
+    --bg-tarjeta: #f2f1ee;
+    --oro: #b79b63;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: var(--fuente-principal);
+}
+
+body {
+    background-color: var(--bg-principal);
+    color: var(--texto-principal);
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+}
+
+.encabezado {
+    background-color: var(--bg-tarjeta);
+    border-bottom: 1px solid var(--borde);
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.logotipo {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.icono-logo {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, var(--oro), #b79b63);
+    color: #171717;
+    border-radius: var(--radio);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.2rem;
+}
+
+.titulo-logo h1 {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--texto-principal);
+    line-height: 1;
+}
+
+.titulo-logo span {
+    font-size: 0.7rem;
+    color: var(--oro);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+}
+
+.barra-usuario {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.nombre-usuario {
+    font-weight: 600;
+    font-size: 0.9rem;
+    text-transform: capitalize;
+}
+
+.badge-rol {
+    background-color: rgba(197, 155, 39, 0.15);
+    color: var(--oro);
+    border: 1px solid rgba(197, 155, 39, 0.3);
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.8rem;
+    font-weight: 600;
+}
+
+.contenedor-principal {
+    max-width: 1200px;
+    width: 100%;
+    margin: 2rem auto;
+    padding: 0 1.5rem;
+    flex-grow: 1;
+}
+
+.tarjeta {
+    background-color: var(--bg-tarjeta);
+    border: 1px solid var(--borde);
+    border-radius: var(--radio);
+    padding: 1.75rem;
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+.tarjeta-login {
+    max-width: 420px;
+    margin: 3rem auto;
+}
+
+.titulo-seccion {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+    color: var(--texto-principal);
+}
+
+.subtitulo-seccion {
+    font-size: 0.875rem;
+    color: var(--texto-secundario);
+    margin-bottom: 1.25rem;
+}
+
+.subtitulo-bloque {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 0.75rem;
+    color: var(--texto-principal);
+}
+
+.grupo-campo {
+    margin-bottom: 1.25rem;
+}
+
+.etiqueta-campo {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--texto-secundario);
+    margin-bottom: 0.5rem;
+}
+
+.campo-entrada {
+    width: 100%;
+    background-color: var(--bg-campo);
+    border: 1px solid var(--borde);
+    color: var(--texto-principal);
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    transition: var(--transicion);
+}
+
+.campo-entrada:focus {
+    outline: none;
+    border-color: #e9e3d4;
+    background-color: #e9e3d4;
+    color: #171717;
+    transition: .5s;
+}
+
+.selector-rol {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.75rem;
+}
+
+.opcion-rol {
+    border: 1px solid var(--borde);
+    background-color: var(--bg-campo);
+    padding: 0.75rem;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 600;
+    transition: var(--transicion);
+}
+
+.opcion-rol:hover {
+    border-color: var(--oro);
+}
+
+.btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    border-radius: 8px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    border: none;
+    transition: var(--transicion);
+}
+
+.btn-oro {
+    background-color: var(--oro);
+    color: #171717;
+}
+
+.btn-oro:hover {
+    background-color: #171717;
+    color: #b79b63;
+    transition: .5s;
+}
+
+.btn-secundario {
+    background-color: transparent;
+    border: 1px solid var(--borde);
+    color: var(--texto-secundario);
+}
+
+.btn-secundario:hover {
+    color: var(--texto-principal);
+    border-color: var(--texto-secundario);
+}
+
+.btn-peligro-suave {
+    background-color: rgba(239, 68, 68, 0.15);
+    color: var(--peligro);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+}
+
+.btn-peligro-suave:hover {
+    background-color: rgba(239, 68, 68, 0.25);
+}
+
+.btn-exito-suave {
+    background-color: rgba(16, 185, 129, 0.15);
+    color: var(--exito);
+    border: 1px solid rgba(16, 185, 129, 0.3);
+    padding: 0.4rem 0.8rem;
+    font-size: 0.8rem;
+}
+
+.btn-exito-suave:hover {
+    background-color: rgba(16, 185, 129, 0.25);
+}
+
+.grid-filtros {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 1rem;
+}
+
+.grid-tarjetas {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.25rem;
+}
+
+.grid-dos-columnas {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 1.5rem;
+}
+
+.grid-dos-campos {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+}
+
+.tarjeta-disponibilidad {
+    background-color: var(--bg-tarjeta);
+    border: 1px solid var(--borde);
+    border-radius: var(--radio);
+    padding: 1.25rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 1.25rem;
+    transition: var(--transicion);
+}
+
+.tarjeta-disponibilidad:hover {
+    border-color: var(--oro);
+}
+
+.encabezado-materia {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.etiqueta-materia {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--oro);
+    background-color: rgba(197, 155, 39, 0.1);
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+}
+
+.duracion-materia {
+    font-size: 0.75rem;
+    color: var(--texto-secundario);
+}
+
+.nombre-tutor {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-top: 0.5rem;
+}
+
+.detalles-horario {
+    font-size: 0.85rem;
+    color: var(--texto-secundario);
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+    margin-top: 0.5rem;
+}
+
+.contenedor-tabla {
+    overflow-x: auto;
+    margin-top: 0.5rem;
+}
+
+.tabla-datos {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+    font-size: 0.9rem;
+}
+
+.tabla-datos th {
+    background-color: var(--bg-campo);
+    color: var(--texto-secundario);
+    padding: 0.85rem 1rem;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.tabla-datos td {
+    padding: 1rem;
+    border-bottom: 1px solid var(--borde);
+    color: var(--texto-principal);
+}
+
+.estado-badge {
+    padding: 0.25rem 0.65rem;
+    border-radius: 12px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    display: inline-block;
+}
+
+.estado-pendiente {
+    color: #f59e0b;
+    background-color: rgba(245, 158, 11, 0.1);
+    border: 1px solid rgba(245, 158, 11, 0.2);
+}
+
+.estado-aprobado {
+    color: var(--exito);
+    background-color: rgba(16, 185, 129, 0.1);
+    border: 1px solid rgba(16, 185, 129, 0.2);
+}
+
+.estado-rechazado {
+    color: var(--peligro);
+    background-color: rgba(239, 68, 68, 0.1);
+    border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+.oculto {
+    display: none !important;
+}
+
+.ancho-total {
+    width: 100%;
+}
+
+.texto-centro {
+    text-align: center;
+}
+
+.texto-derecha {
+    text-align: right;
+}
+
+.texto-resaltado {
+    font-weight: 600;
+}
+
+.icono-oro {
+    color: var(--oro);
+}
+
+.mb-lg {
+    margin-bottom: 2rem;
+}
+
+.mt-sm {
+    margin-top: 0.5rem;
+}
+
+.contenedor-acciones {
+    display: flex;
+    gap: 0.5rem;
+    justify-content: center;
+}
+
+.pie-pagina {
+    background-color: var(--bg-tarjeta);
+    border-top: 1px solid var(--borde);
+    padding: 40px;
+    text-align: center;
+    font-size: 0.8rem;
+    color: var(--texto-secundario);
+    margin-top: auto;
+}
+
+.creditos-equipo {
+    margin-top: 0.25rem;
+    color: var(--texto-principal);
+    font-weight: 600;
+}
+
+@media (max-width: 768px) {
+    .encabezado {
+        padding: 1rem;
+    }
+
+    .contenedor-principal {
+        padding: 0 1rem;
+    }
+
+    .grid-dos-columnas {
+        grid-template-columns: 1fr;
+    }
+}
