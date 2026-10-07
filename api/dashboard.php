@@ -1,13 +1,13 @@
 <?php
-
+// api/dashboard.php - Nills Berducido Gómez
 header('Content-Type: application/json');
 require_once '../conexion.php';
 
 try {
-    $totalSolicitudes = $pdo->query("SELECT COUNT(*) FROM solicitudes")->fetchColumn();
-    $aprobadas        = $pdo->query("SELECT COUNT(*) FROM solicitudes WHERE estado = 'Aprobada'")->fetchColumn();
-    $pendientes       = $pdo->query("SELECT COUNT(*) FROM solicitudes WHERE estado = 'Pendiente'")->fetchColumn();
-    $rechazadas       = $pdo->query("SELECT COUNT(*) FROM solicitudes WHERE estado = 'Rechazada'")->fetchColumn();
+    $totalSolicitudes = $pdo->query("SELECT COUNT(*) FROM tblSolicitudes")->fetchColumn();
+    $aprobadas        = $pdo->query("SELECT COUNT(*) FROM tblSolicitudes WHERE estadoSolicitud = 'Aprobada'")->fetchColumn();
+    $pendientes       = $pdo->query("SELECT COUNT(*) FROM tblSolicitudes WHERE estadoSolicitud = 'Pendiente'")->fetchColumn();
+    $rechazadas       = $pdo->query("SELECT COUNT(*) FROM tblSolicitudes WHERE estadoSolicitud = 'Rechazada'")->fetchColumn();
 
     $tasaAtencion = $totalSolicitudes > 0 
         ? round((($aprobadas + $rechazadas) / $totalSolicitudes) * 100, 1) 
@@ -28,3 +28,5 @@ try {
     echo json_encode(['exito' => false, 'mensaje' => 'Error al calcular indicadores']);
 }
 ?>
+
+
