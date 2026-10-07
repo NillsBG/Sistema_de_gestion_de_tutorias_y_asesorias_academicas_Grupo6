@@ -1,27 +1,36 @@
 <?php
-// conexion.php - Conexión PDO centralizada a la base de datos tutoria_umg
-
-$host    = '127.0.0.1';     // Servidor local (localhost)
-$db      = 'tutoria_umg';   // Nombre de la base de datos
-$user    = 'root';          // Usuario por defecto en XAMPP / WAMP
-$pass    = '1234';              // Contraseña (en XAMPP viene vacía por defecto)
+// api/conexion.php - Conexión PDO Inteligente (Prueba varias claves automáticamente)
+$host    = '127.0.0.1';
+$db      = 'tutoria_umg';
+$user    = 'root';
 $charset = 'utf8mb4';
 
-$dsn = "mysql:host=$host;dbname=$db;charset=$charset";
 $options = [
     PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
     PDO::ATTR_DEFAULT_FETCH_MODE => PDO::FETCH_ASSOC,
     PDO::ATTR_EMULATE_PREPARES   => false,
 ];
 
-try {
-    $pdo = new PDO($dsn, $user, $pass, $options);
-} catch (\PDOException $e) {
+$pdo = null;
+$clavesAProbar = ['1234', '', 'root', 'admin'];
+$ultimoError = '';
+
+foreach ($clavesAProbar as $pass) {
+    try {
+        $dsn = "mysql:host=$host;dbname=$db;charset=$charset";
+        $pdo = new PDO($dsn, $user, $pass, $options);
+        break; // Conexión exitosa
+    } catch (\PDOException $e) {
+        $ultimoError = $e->getMessage();
+    }
+}
+
+if (!$pdo) {
     http_response_code(500);
     header('Content-Type: application/json; charset=utf-8');
     echo json_encode([
         'exito' => false, 
-        'mensaje' => 'Error de conexión a la base de datos tutoria_umg: ' . $e->getMessage()
+        'mensaje' => 'Error al conectar a la base de datos tutoria_umg: ' . $ultimoError
     ], JSON_UNESCAPED_UNICODE);
     exit;
 }
