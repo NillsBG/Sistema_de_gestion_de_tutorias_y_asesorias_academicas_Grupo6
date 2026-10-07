@@ -2,7 +2,7 @@
 // login.php - Nills Berducido Gómez (Líder de Integración, Lógica de Negocio & QA)
 session_start();
 header('Content-Type: application/json');
-require_once 'conexion.php';
+require_once 'api/conexion.php';
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     http_response_code(405);
