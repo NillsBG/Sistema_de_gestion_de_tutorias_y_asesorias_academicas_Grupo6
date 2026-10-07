@@ -1,7 +1,7 @@
 <?php
-// session_check.php - Nills Berducido Gómez
+// php/session_check.php - Consulta de Sesión Activa
 session_start();
-header('Content-Type: application/json');
+header('Content-Type: application/json; charset=utf-8');
 
 if (isset($_SESSION['idUsuario'])) {
     echo json_encode([
@@ -14,8 +14,8 @@ if (isset($_SESSION['idUsuario'])) {
             'noCarnetCompleto' => $_SESSION['noCarnetCompleto'] ?? null,
             'idTutor'          => $_SESSION['idTutor'] ?? null
         ]
-    ]);
+    ], JSON_UNESCAPED_UNICODE);
 } else {
-    echo json_encode(['autenticado' => false]);
+    echo json_encode(['autenticado' => false], JSON_UNESCAPED_UNICODE);
 }
 ?>
