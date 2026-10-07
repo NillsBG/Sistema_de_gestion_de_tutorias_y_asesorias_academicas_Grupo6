@@ -1,7 +1,7 @@
 <?php
 // api/dashboard.php - Nills Berducido Gómez
 header('Content-Type: application/json');
-require_once '../conexion.php';
+require_once 'conexion.php';
 
 try {
     $totalSolicitudes = $pdo->query("SELECT COUNT(*) FROM tblSolicitudes")->fetchColumn();

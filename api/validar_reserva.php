@@ -1,7 +1,7 @@
 <?php
 // api/validar_reserva.php - Nills Berducido Gómez (Lógica de Negocio)
 header('Content-Type: application/json');
-require_once '../conexion.php';
+require_once 'conexion.php';
 
 function verificarCrucesYDuplicados($pdo, $noCarnetEstudiante, $idDisponibilidad) {
     // 1. Validar solicitud duplicada en tblSolicitudes
