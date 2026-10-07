@@ -1,3 +1,6 @@
+/*
+    Creado por Velveth Saraí Chavez Mejía
+*/
 CREATE DATABASE IF NOT EXISTS tutoria_umg 
 CHARACTER SET utf8mb4 
 COLLATE utf8mb4_unicode_ci;
@@ -139,7 +142,7 @@ INSERT INTO tblTutores (idUsuario, nombreTutor) VALUES
 (2, 'Inga. Velveth Chavez');
 
 -- Inserción de estudiante con su carrera asignada directamente por FK
-INSERT INTO tblEstudiantes (noCarnetCompleto, codigoCarreraEstudiante, anioInscripcion, correlativoCarnet, idUsuario, nombreEstudiante, idCarrera) VALUES
+INSERT INTO tblEstudiantes (noCarnetCompleto, codigoCarreraEstudiante,  fechaInscripcion, correlativoCarnet, idUsuario, nombreEstudiante, idCarrera) VALUES
 ('0901-23-11238', '0901', '23', '11238', 3, 'Mario Alejandro Corzo Peralta', 1);
 
 select * from tblEstudiantes;

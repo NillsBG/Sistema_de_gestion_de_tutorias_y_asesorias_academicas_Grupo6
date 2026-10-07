@@ -3,14 +3,16 @@
 session_start();
 header('Content-Type: application/json');
 
-if (isset($_SESSION['usuario_id'])) {
+if (isset($_SESSION['idUsuario'])) {
     echo json_encode([
         'autenticado' => true,
         'usuario' => [
-            'id'     => $_SESSION['usuario_id'],
-            'nombre' => $_SESSION['usuario_nombre'],
-            'correo' => $_SESSION['usuario_correo'],
-            'rol'    => $_SESSION['usuario_rol']
+            'idUsuario'        => $_SESSION['idUsuario'],
+            'username'         => $_SESSION['username'],
+            'rol'              => $_SESSION['rol'],
+            'nombre'           => $_SESSION['nombre'],
+            'noCarnetCompleto' => $_SESSION['noCarnetCompleto'] ?? null,
+            'idTutor'          => $_SESSION['idTutor'] ?? null
         ]
     ]);
 } else {
