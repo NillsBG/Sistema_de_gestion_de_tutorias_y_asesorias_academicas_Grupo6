@@ -1,15 +1,18 @@
 <?php
-// api/solicitudes.php - Registro y actualización de solicitudes
+// api/solicitudes.php - Endpoint Centralizado para CRUD de Solicitudes
 header('Content-Type: application/json; charset=utf-8');
 
 if (file_exists('../conexion.php')) {
     require_once '../conexion.php';
-} else {
+} elseif (file_exists('conexion.php')) {
     require_once 'conexion.php';
+} else {
+    require_once '../api/conexion.php';
 }
 
 $metodo = $_SERVER['REQUEST_METHOD'];
 
+// --- [READ] Obtener Solicitudes según Carnet de Estudiante o ID de Tutor ---
 if ($metodo === 'GET') {
     try {
         $idTutor  = (int)($_GET['idTutor'] ?? $_GET['tutor_id'] ?? 0);
@@ -19,17 +22,17 @@ if ($metodo === 'GET') {
             SELECT 
                 s.idSolicitud,
                 s.noCarnetEstudiante,
-                e.nombreEstudiante,
+                COALESCE(e.nombreEstudiante, 'Estudiante UMG') AS nombreEstudiante,
                 d.nombreMateria,
                 d.fecha,
                 d.horaInicio,
                 d.horaFin,
                 s.estadoSolicitud,
-                t.nombreTutor
+                COALESCE(t.nombreTutor, 'Tutor UMG') AS nombreTutor
             FROM tblSolicitudes s
             INNER JOIN tblDisponibilidad d ON s.idDisponibilidad = d.idDisponibilidad
-            INNER JOIN tblTutores t ON d.idTutor = t.idTutor
-            INNER JOIN tblEstudiantes e ON s.noCarnetEstudiante = e.noCarnetCompleto
+            LEFT JOIN tblTutores t ON d.idTutor = t.idTutor
+            LEFT JOIN tblEstudiantes e ON s.noCarnetEstudiante = e.noCarnetCompleto
             WHERE 1=1
         ";
 
@@ -53,7 +56,10 @@ if ($metodo === 'GET') {
         http_response_code(500);
         echo json_encode(['exito' => false, 'mensaje' => 'Error al consultar solicitudes: ' . $e->getMessage()]);
     }
-} elseif ($metodo === 'POST') {
+}
+
+// --- [CREATE] Registrar Nueva Solicitud de Cita ---
+elseif ($metodo === 'POST') {
     try {
         $input = json_decode(file_get_contents('php://input'), true) ?? $_POST;
 
@@ -62,7 +68,7 @@ if ($metodo === 'GET') {
 
         if (empty($noCarnet) || $idDisp <= 0) {
             http_response_code(400);
-            echo json_encode(['exito' => false, 'mensaje' => 'Faltan datos para crear la solicitud']);
+            echo json_encode(['exito' => false, 'mensaje' => 'Faltan datos obligatorios para registrar la solicitud.']);
             exit;
         }
 
@@ -80,7 +86,10 @@ if ($metodo === 'GET') {
         http_response_code(500);
         echo json_encode(['exito' => false, 'mensaje' => 'Error al registrar la solicitud: ' . $e->getMessage()]);
     }
-} elseif ($metodo === 'PUT') {
+}
+
+// --- [UPDATE] Cambiar Estado de Solicitud (Aprobada, Rechazada, Cancelada) ---
+elseif ($metodo === 'PUT') {
     try {
         $input = json_decode(file_get_contents('php://input'), true);
 
@@ -99,7 +108,7 @@ if ($metodo === 'GET') {
         echo json_encode(['exito' => true, 'mensaje' => 'Estado actualizado a ' . $nuevoEstado], JSON_UNESCAPED_UNICODE);
     } catch (Exception $e) {
         http_response_code(500);
-        echo json_encode(['exito' => false, 'mensaje' => 'Error al actualizar estado: ' . $e->getMessage()]);
+        echo json_encode(['exito' => false, 'mensaje' => 'Error al actualizar el estado: ' . $e->getMessage()]);
     }
 }
 ?>

@@ -7,15 +7,13 @@
     <title>Sistema de Gestión de Tutorías Académicas</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
-        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="css/style.css">
 </head>
 
 <body>
-
-    <!-- Narvar (Se activa al iniciar sesión) -->
+    <!-- Navbar (Se activa al iniciar sesión) -->
     <header id="encabezado" class="encabezado oculto">
         <div class="logotipo">
             <div class="icono-logo">
@@ -40,63 +38,57 @@
     <!-- Contenedor de vistas principales -->
     <main class="contenedor-principal">
 
-        <!--  Vista de login sin narvar -->
+        <!-- Vista de login -->
         <section id="vista-login">
-
-            <!-- Título del Sistema -->
             <div class="encabezado-empresa">
                 <h1 id="titulo-empresa" class="titulo-empresa">Sistema de Gestión de Tutorías Académicas</h1>
                 <p class="subtitulo-empresa">¿Estás listo para iniciar una nueva experiencia educativa?</p>
             </div>
 
-            <!-- Tarjeta del Formulario de Login -->
             <div class="tarjeta tarjeta-login">
-    <h2 class="titulo-seccion texto-centro">Iniciar Sesión</h2>
-    <p class="subtitulo-seccion texto-centro">Ingresa tus credenciales institucionales para acceder.</p>
+                <h2 class="titulo-seccion texto-centro">Iniciar Sesión</h2>
+                <p class="subtitulo-seccion texto-centro">Ingresa tus credenciales institucionales para acceder.</p>
 
-    <form id="form-login">
-        <div class="grupo-campo">
-            <label class="etiqueta-campo">Tipo de Perfil</label>
-            <div class="selector-rol">
-                <label class="opcion-rol">
-                    <input type="radio" name="rol" value="estudiante" checked> Estudiante
-                </label>
-                <label class="opcion-rol">
-                    <input type="radio" name="rol" value="tutor"> Tutor
-                </label>
+                <form id="form-login" onsubmit="procesarLogin(event)">
+                    <div class="grupo-campo">
+                        <label class="etiqueta-campo">Tipo de Perfil</label>
+                        <div class="selector-rol">
+                            <label class="opcion-rol">
+                                <input type="radio" name="rol" value="estudiante" checked> Estudiante
+                            </label>
+                            <label class="opcion-rol">
+                                <input type="radio" name="rol" value="tutor"> Tutor
+                            </label>
+                        </div>
+                    </div>
+
+                    <div class="grupo-campo">
+                        <label for="login-correo" class="etiqueta-campo">Correo Electrónico</label>
+                        <input type="email" id="login-correo" class="campo-entrada" required placeholder="mcorzo@umg.edu.gt">
+                    </div>
+
+                    <div class="grupo-campo">
+                        <label for="login-clave" class="etiqueta-campo">Contraseña</label>
+                        <input type="password" id="login-clave" class="campo-entrada" required placeholder="••••••••">
+                    </div>
+
+                    <button type="button" onclick="procesarLogin(event)" class="btn btn-oro ancho-total">
+                        <i class="fa-solid fa-right-to-bracket"></i> Ingresar al Sistema
+                    </button>
+                </form>
             </div>
-        </div>
-
-        <div class="grupo-campo">
-            <label for="login-correo" class="etiqueta-campo">Correo Electrónico</label>
-            <input type="email" id="login-correo" class="campo-entrada" required placeholder="mcorzo@umg.edu.gt">
-        </div>
-
-        <div class="grupo-campo">
-            <label for="login-clave" class="etiqueta-campo">Contraseña</label>
-            <input type="password" id="login-clave" class="campo-entrada" required placeholder="••••••••">
-        </div>
-
-        <!-- NOTA: type="button" evita que la página se recargue si hay error -->
-        <button type="button" onclick="procesarLogin(event)" class="btn btn-oro ancho-total">
-            <i class="fa-solid fa-right-to-bracket"></i> Ingresar al Sistema
-        </button>
-    </form>
-</div>
         </section>
 
-        <!--  Vista protal del estudiante -->
+        <!-- Vista portal del estudiante -->
         <section id="vista-estudiante" class="oculto">
             <div class="tarjeta mb-lg">
                 <h2 class="titulo-seccion">Portal del Estudiante</h2>
-                <p class="subtitulo-seccion">Consulta la oferta de tutorías disponibles y gestiona tus citas académicas.
-                </p>
+                <p class="subtitulo-seccion">Consulta la oferta de tutorías disponibles y gestiona tus citas académicas.</p>
 
                 <div class="grid-filtros">
                     <div>
                         <label for="buscar-texto" class="etiqueta-campo">Buscar por Tutor o Curso</label>
-                        <input type="text" id="buscar-texto" class="campo-entrada"
-                            placeholder="Ej. Desarrollo Web, Ing. Domínguez...">
+                        <input type="text" id="buscar-texto" class="campo-entrada" placeholder="Ej. Desarrollo Web, Ing. Domínguez...">
                     </div>
                     <div>
                         <label for="filtrar-materia" class="etiqueta-campo">Filtrar por Materia</label>
@@ -105,6 +97,7 @@
                             <option value="Desarrollo Web">Desarrollo Web</option>
                             <option value="Bases de Datos">Bases de Datos</option>
                             <option value="Análisis de Sistemas">Análisis de Sistemas</option>
+                            <option value="Electrónica">Electrónica</option>
                         </select>
                     </div>
                 </div>
@@ -112,25 +105,7 @@
 
             <h3 class="subtitulo-bloque">Espacios Disponibles para Citas</h3>
             <div id="contenedor-disponibilidad" class="grid-tarjetas mb-lg">
-                <div class="tarjeta-disponibilidad">
-                    <div>
-                        <div class="encabezado-materia">
-                            <span class="etiqueta-materia">Desarrollo Web</span>
-                            <span class="duracion-materia"><i class="fa-regular fa-clock"></i> 45 min</span>
-                        </div>
-                        <h4 class="nombre-tutor">Ing. Leonel Domínguez</h4>
-                        <div class="detalles-horario">
-                            <div><i class="fa-regular fa-calendar"></i> Jueves, 25 de Septiembre</div>
-                            <div><i class="fa-solid fa-clock"></i> 10:00 AM - 10:45 AM</div>
-                            <div><i class="fa-solid fa-location-dot"></i> Laboratorio 3 / Google Meet</div>
-                        </div>
-                    </div>
-                    <button type="button"
-                        onclick="solicitarTutoria('Desarrollo Web', 'Ing. Leonel Domínguez', '25/09/2026 10:00 AM')"
-                        class="btn btn-oro ancho-total">
-                        Solicitar Tutoría
-                    </button>
-                </div>
+                <!-- Se renderiza dinámicamente desde JS (app.js) -->
             </div>
 
             <div class="tarjeta">
@@ -149,36 +124,24 @@
                             </tr>
                         </thead>
                         <tbody id="tabla-solicitudes-estudiante">
-                            <tr>
-                                <td class="texto-resaltado">Desarrollo Web</td>
-                                <td>Ing. Leonel Domínguez</td>
-                                <td>25/09/2026 - 10:00 AM</td>
-                                <td><span class="estado-badge estado-pendiente">Pendiente</span></td>
-                                <td class="texto-derecha">
-                                    <button type="button" class="btn btn-peligro-suave"
-                                        onclick="cancelarSolicitud(this)">Cancelar</button>
-                                </td>
-                            </tr>
+                            <!-- Se renderiza dinámicamente desde JS (app.js) -->
                         </tbody>
                     </table>
                 </div>
             </div>
         </section>
 
-        <!--  Vista del portal de tutor-->
+        <!-- Vista del portal de tutor -->
         <section id="vista-tutor" class="oculto">
             <div class="grid-dos-columnas">
-
                 <div class="tarjeta">
-                    <h3 class="subtitulo-bloque"><i class="fa-solid fa-plus-circle icono-oro"></i> Abrir Disponibilidad
-                    </h3>
+                    <h3 class="subtitulo-bloque"><i class="fa-solid fa-plus-circle icono-oro"></i> Abrir Disponibilidad</h3>
                     <p class="subtitulo-seccion">Publica un nuevo espacio de atención para tus estudiantes.</p>
 
                     <form id="form-disponibilidad" onsubmit="guardarDisponibilidad(event)">
                         <div class="grupo-campo">
                             <label for="disp-materia" class="etiqueta-campo">Materia / Curso</label>
-                            <input type="text" id="disp-materia" class="campo-entrada" required
-                                placeholder="Ej. Desarrollo Web">
+                            <input type="text" id="disp-materia" class="campo-entrada" required placeholder="Ej. Desarrollo Web">
                         </div>
                         <div class="grupo-campo">
                             <label for="disp-fecha" class="etiqueta-campo">Fecha</label>
@@ -215,35 +178,21 @@
                                 </tr>
                             </thead>
                             <tbody id="tabla-solicitudes-tutor">
-                                <tr>
-                                    <td class="texto-resaltado">Mario Corzo</td>
-                                    <td>Desarrollo Web</td>
-                                    <td>25/09/2026 - 10:00 AM</td>
-                                    <td class="texto-centro contenedor-acciones">
-                                        <button type="button" class="btn btn-exito-suave"
-                                            onclick="cambiarEstadoSolicitud(this, 'Aprobada')">Aceptar</button>
-                                        <button type="button" class="btn btn-peligro-suave"
-                                            onclick="cambiarEstadoSolicitud(this, 'Rechazada')">Rechazar</button>
-                                    </td>
-                                </tr>
+                                <!-- Se renderiza dinámicamente desde JS (app.js) -->
                             </tbody>
                         </table>
                     </div>
                 </div>
-
             </div>
         </section>
-
     </main>
 
-    <!-- Pie de pagina -->
+    <!-- Pie de página -->
     <footer class="pie-pagina">
         <p>Universidad Mariano Gálvez de Guatemala · Facultad de Ingeniería en Sistemas</p>
         <p class="creditos-equipo">Proyecto Final - Desarrollo Web (Grupo 6)</p>
     </footer>
 
     <script src="js/app.js"></script>
-
 </body>
-
 </html>
