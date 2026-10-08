@@ -350,3 +350,72 @@ window.procesarLogin = procesarLogin;
 window.cerrarSesion = cerrarSesion;
 window.solicitarTutoria = solicitarTutoria;
 window.cargarMetricsDashboard = cargarMetricsDashboard;
+
+/**
+ * Envía el formulario para guardar o publicar una nueva disponibilidad
+ */
+async function guardarDisponibilidad(event) {
+    if (event) event.preventDefault();
+
+    if (!usuarioAutenticado || !usuarioAutenticado.idTutor) {
+        alert('Acceso no autorizado. Debes iniciar sesión como tutor.');
+        return;
+    }
+
+    const materia = document.getElementById('disp-materia').value.trim();
+    const fecha = document.getElementById('disp-fecha').value;
+    const horaInicio = document.getElementById('disp-inicio').value;
+    const horaFin = document.getElementById('disp-fin').value;
+
+    try {
+        const respuesta = await fetch('api/disponibilidad.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                idTutor: usuarioAutenticado.idTutor,
+                nombreMateria: materia,
+                fecha: fecha,
+                horaInicio: horaInicio,
+                horaFin: horaFin
+            })
+        });
+
+        const resultado = await respuesta.json();
+        if (resultado.exito) {
+            alert('✅ ' + resultado.mensaje);
+            document.getElementById('form-disponibilidad').reset();
+            cargarDisponibilidad(); // Refrescar vistas
+        } else {
+            alert('❌ ' + resultado.mensaje);
+        }
+    } catch (error) {
+        console.error('Error al guardar disponibilidad:', error);
+        alert('Error de conexión con el servidor.');
+    }
+}
+
+/**
+ * Elimina un horario de disponibilidad publicado por el tutor
+ */
+async function eliminarDisponibilidad(idDisponibilidad) {
+    if (!confirm('¿Estás seguro de eliminar este horario publicado?')) return;
+
+    try {
+        const respuesta = await fetch('api/disponibilidad.php', {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ idDisponibilidad: idDisponibilidad })
+        });
+
+        const resultado = await respuesta.json();
+        if (resultado.exito) {
+            alert('✅ ' + resultado.mensaje);
+            cargarDisponibilidad();
+        } else {
+            alert('❌ ' + resultado.mensaje);
+        }
+    } catch (error) {
+        console.error('Error al eliminar:', error);
+        alert('Error al conectar con el servidor.');
+    }
+}
