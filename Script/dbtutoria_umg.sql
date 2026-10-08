@@ -131,6 +131,15 @@ INSERT INTO tblUsuarios (username, contrasena, estado) VALUES
 ('nberducido', '1234', 'Activo'),
 ('vchavez', 'Sarai', 'Activo'),
 ('mcorzo', 'Mario26', 'Activo');
+-- 1. Agregar la columna correo a la tabla tblUsuarios (permitiendo valores nulos o con un valor por defecto si es necesario)
+ALTER TABLE tblUsuarios 
+ADD COLUMN correo VARCHAR(150) UNIQUE AFTER contrasena;
+
+-- 2. (Opcional pero recomendado) Actualizar los registros existentes con sus correos correspondientes
+UPDATE tblUsuarios SET correo = 'nberducido@miumg.edu.gt' WHERE username = 'nberducido';
+UPDATE tblUsuarios SET correo = 'vchavez@miumg.edu.gt' WHERE username = 'vchavez';
+UPDATE tblUsuarios SET correo = 'mcorzo@miumg.edu.gt' WHERE username = 'mcorzo';
+
 
 INSERT INTO tblAsignacionRoles (idUsuario, idRol) VALUES
 (1, 2), -- Nills es Tutor
