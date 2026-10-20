@@ -1,10 +1,11 @@
 let usuarioAutenticado = null;
-let listaDisponibilidadGlobal = []; // Almacena los datos originales para filtrado rápido
+let listaDisponibilidadGlobal = [];
 
 document.addEventListener('DOMContentLoaded', () => {
     verificarSesion();
     configurarEventos();
-    configurarFiltros();
+    cargarDisponibilidad();
+    cargarMetricsDashboard();
 });
 
 // ---------------------------------------------------------------------------
@@ -19,6 +20,7 @@ async function verificarSesion() {
         if (data.autenticado && data.usuario) {
             usuarioAutenticado = data.usuario;
             actualizarInterfazUsuario();
+            cargarSolicitudesUsuario();
         } else {
             usuarioAutenticado = null;
             actualizarInterfazUsuario();
@@ -30,25 +32,26 @@ async function verificarSesion() {
     }
 }
 
+/**
+ * Procesa el inicio de sesión por Usuario (autodetectando el rol desde la BD)
+ */
 async function procesarLogin(event) {
     if (event) event.preventDefault();
 
-    const correoInput = document.getElementById('login-correo');
-    const claveInput  = document.getElementById('login-clave');
-    const formLogin   = document.getElementById('form-login');
+    const usuarioInput = document.getElementById('login-usuario') || document.getElementById('login-correo');
+    const claveInput   = document.getElementById('login-clave');
+    const formLogin    = document.getElementById('form-login');
 
-    if (!correoInput || !claveInput) {
-        alert('Error: No se encontraron los campos del formulario.');
+    if (!usuarioInput || !claveInput) {
+        alert('Error: No se encontraron los campos de inicio de sesión.');
         return;
     }
 
-    const correo = correoInput.value.trim();
-    const clave  = claveInput.value.trim();
-    const rolRadio = document.querySelector('input[name="rol"]:checked');
-    const rolSeleccionado = rolRadio ? rolRadio.value : 'estudiante';
+    const usuarioVal = usuarioInput.value.trim();
+    const claveVal   = claveInput.value.trim();
 
-    if (!correo || !clave) {
-        alert('Por favor, ingresa tu correo electrónico y contraseña.');
+    if (!usuarioVal || !claveVal) {
+        alert('Por favor ingresa tu usuario y contraseña.');
         return;
     }
 
@@ -57,9 +60,8 @@ async function procesarLogin(event) {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-                correo: correo,
-                clave: clave,
-                rol: rolSeleccionado
+                usuario: usuarioVal,
+                clave: claveVal
             })
         });
 
@@ -67,12 +69,22 @@ async function procesarLogin(event) {
 
         if (resultado.exito) {
             usuarioAutenticado = resultado.usuario;
-            alert('¡Bienvenido ' + (resultado.usuario.nombre || resultado.usuario.username) + '!');
+            alert('¡Bienvenido ' + (resultado.usuario.nombre || resultado.usuario.username) + '! (' + resultado.usuario.rol + ')');
 
-            if (formLogin) formLogin.reset();
+            if (formLogin) {
+                formLogin.reset();
+            } else {
+                usuarioInput.value = '';
+                claveInput.value = '';
+            }
+
             actualizarInterfazUsuario();
+
+            cargarDisponibilidad();
+            cargarMetricsDashboard();
+            cargarSolicitudesUsuario();
         } else {
-            alert(resultado.mensaje || 'Credenciales incorrectas');
+            alert('❌ ' + (resultado.mensaje || 'Credenciales incorrectas'));
         }
     } catch (error) {
         console.error('Error en procesarLogin:', error);
@@ -88,15 +100,21 @@ async function cerrarSesion() {
     }
 
     usuarioAutenticado = null;
+
     const formLogin = document.getElementById('form-login');
     if (formLogin) formLogin.reset();
+
+    const usuarioInput = document.getElementById('login-usuario') || document.getElementById('login-correo');
+    const claveInput   = document.getElementById('login-clave');
+    if (usuarioInput) usuarioInput.value = '';
+    if (claveInput) claveInput.value = '';
 
     actualizarInterfazUsuario();
     alert('Sesión cerrada correctamente.');
 }
 
 // ---------------------------------------------------------------------------
-// 2. CONTROL VISUAL DE VISTAS (INDEX.HTML)
+// 2. CONTROL VISUAL DE VISTAS SEGÚN EL ROL AUTODETECTADO
 // ---------------------------------------------------------------------------
 
 function actualizarInterfazUsuario() {
@@ -123,19 +141,10 @@ function actualizarInterfazUsuario() {
         if (esTutor) {
             if (vistaTutor) vistaTutor.classList.remove('oculto');
             if (vistaEstudiante) vistaEstudiante.classList.add('oculto');
-            
-            // Cargar datos del Tutor
-            cargarSolicitudesTutor();
         } else {
             if (vistaEstudiante) vistaEstudiante.classList.remove('oculto');
             if (vistaTutor) vistaTutor.classList.add('oculto');
-
-            // Cargar datos del Estudiante
-            cargarDisponibilidad();
-            cargarSolicitudesEstudiante();
         }
-
-        cargarMetricsDashboard();
     } else {
         if (vistaLogin) vistaLogin.classList.remove('oculto');
         if (encabezado) encabezado.classList.add('oculto');
@@ -145,7 +154,7 @@ function actualizarInterfazUsuario() {
 }
 
 // ---------------------------------------------------------------------------
-// 3. OPORTUNIDADES DE TUTORÍA Y FILTROS (VISTA ESTUDIANTE)
+// 3. CARGA DE DISPONIBILIDAD, FILTROS Y DASHBOARD
 // ---------------------------------------------------------------------------
 
 async function cargarDisponibilidad() {
@@ -159,383 +168,76 @@ async function cargarDisponibilidad() {
 
         if (resultado.exito && Array.isArray(resultado.datos)) {
             listaDisponibilidadGlobal = resultado.datos;
-            aplicarFiltrosEImprimir();
-        } else {
-            listaDisponibilidadGlobal = [];
-            contenedor.innerHTML = `
-                <div class="tarjeta texto-centro">
-                    <p><i class="fa-solid fa-circle-info icono-oro"></i> No hay tutorías disponibles en este momento.</p>
-                </div>
-            `;
+            renderizarTarjetasDisponibilidad(listaDisponibilidadGlobal);
         }
     } catch (error) {
         console.error('Error al cargar disponibilidad:', error);
     }
 }
 
-function configurarFiltros() {
-    const inputBuscar = document.getElementById('buscar-texto');
-    const selectMateria = document.getElementById('filtrar-materia');
-
-    if (inputBuscar) {
-        inputBuscar.addEventListener('input', aplicarFiltrosEImprimir);
-    }
-
-    if (selectMateria) {
-        selectMateria.addEventListener('change', aplicarFiltrosEImprimir);
-    }
-}
-
-function aplicarFiltrosEImprimir() {
+function renderizarTarjetasDisponibilidad(datos) {
     const contenedor = document.getElementById('contenedor-disponibilidad');
     if (!contenedor) return;
 
-    const textoBuscar = (document.getElementById('buscar-texto')?.value || '').toLowerCase().trim();
-    const materiaSel  = (document.getElementById('filtrar-materia')?.value || '').toLowerCase().trim();
-
-    const filtrados = listaDisponibilidadGlobal.filter(item => {
-        const materiaMatch = !materiaSel || (item.nombreMateria || '').toLowerCase().includes(materiaSel);
-        
-        const tutorNombre = (item.nombreTutor || '').toLowerCase();
-        const materiaNombre = (item.nombreMateria || '').toLowerCase();
-        const textoMatch = !textoBuscar || tutorNombre.includes(textoBuscar) || materiaNombre.includes(textoBuscar);
-
-        return materiaMatch && textoMatch;
-    });
-
     contenedor.innerHTML = '';
 
-    if (filtrados.length === 0) {
+    if (Array.isArray(datos) && datos.length > 0) {
+        datos.forEach(item => {
+            const idDisp  = item.idDisponibilidad || item.id;
+            const materia = item.nombreMateria || item.materia || 'Tutoría Académica';
+            const tutor   = item.nombreTutor || item.tutor || 'Tutor UMG';
+            const fecha   = item.fecha || '';
+            const hInicio = item.horaInicio || item.hora_inicio || '';
+            const hFin    = item.horaFin || item.hora_fin || '';
+
+            const tarjeta = document.createElement('div');
+            tarjeta.className = 'tarjeta-disponibilidad';
+            tarjeta.innerHTML = `
+                <div>
+                    <div class="encabezado-materia">
+                        <span class="etiqueta-materia">${materia}</span>
+                        <span class="duracion-materia"><i class="fa-regular fa-clock"></i> Cita</span>
+                    </div>
+                    <h4 class="nombre-tutor">${tutor}</h4>
+                    <div class="detalles-horario">
+                        <div><i class="fa-regular fa-calendar"></i> Fecha: <strong>${fecha}</strong></div>
+                        <div><i class="fa-solid fa-clock"></i> Horario: <strong>${hInicio} - ${hFin}</strong></div>
+                    </div>
+                </div>
+                <button type="button" onclick="solicitarTutoria(${idDisp})" class="btn btn-oro ancho-total mt-sm">
+                    <i class="fa-solid fa-paper-plane"></i> Solicitar Tutoría
+                </button>
+            `;
+            contenedor.appendChild(tarjeta);
+        });
+    } else {
         contenedor.innerHTML = `
-            <div class="tarjeta texto-centro" style="grid-column: 1 / -1; padding: 2rem;">
-                <p><i class="fa-solid fa-filter-circle-xmark icono-oro" style="font-size: 1.5rem;"></i></p>
-                <p class="mt-sm">No se encontraron tutorías que coincidan con la búsqueda o filtro seleccionado.</p>
+            <div class="tarjeta texto-centro" style="grid-column: 1 / -1;">
+                <p class="subtitulo-seccion"><i class="fa-solid fa-circle-info"></i> No hay tutorías disponibles con ese filtro.</p>
             </div>
         `;
-        return;
     }
+}
 
-    filtrados.forEach(item => {
-        const idDisp  = item.idDisponibilidad;
-        const materia = item.nombreMateria || 'Tutoría Académica';
-        const tutor   = item.nombreTutor || 'Tutor UMG';
-        const fecha   = item.fecha || '';
-        const hInicio = item.horaInicio || '';
-        const hFin    = item.horaFin || '';
+function aplicarFiltrosTutorias() {
+    const buscarTextoInput   = document.getElementById('buscar-texto');
+    const filtrarMateriaSelect = document.getElementById('filtrar-materia');
 
-        const tarjeta = document.createElement('div');
-        tarjeta.className = 'tarjeta-disponibilidad';
-        tarjeta.innerHTML = `
-            <div>
-                <div class="encabezado-materia">
-                    <span class="etiqueta-materia">${materia}</span>
-                    <span class="duracion-materia"><i class="fa-regular fa-clock"></i> 45 min</span>
-                </div>
-                <h4 class="nombre-tutor">${tutor}</h4>
-                <div class="detalles-horario">
-                    <div><i class="fa-regular fa-calendar"></i> ${fecha}</div>
-                    <div><i class="fa-solid fa-clock"></i> ${hInicio} - ${hFin}</div>
-                    <div><i class="fa-solid fa-location-dot"></i> Laboratorio / En línea</div>
-                </div>
-            </div>
-            <button type="button" onclick="solicitarTutoria(${idDisp})" class="btn btn-oro ancho-total mt-sm">
-                <i class="fa-solid fa-paper-plane"></i> Solicitar Tutoría
-            </button>
-        `;
-        contenedor.appendChild(tarjeta);
+    const texto   = buscarTextoInput ? buscarTextoInput.value.toLowerCase().trim() : '';
+    const materia = filtrarMateriaSelect ? filtrarMateriaSelect.value.toLowerCase().trim() : '';
+
+    const filtrados = listaDisponibilidadGlobal.filter(item => {
+        const itemMateria = (item.nombreMateria || '').toLowerCase();
+        const itemTutor   = (item.nombreTutor || '').toLowerCase();
+
+        const coincideTexto   = !texto || itemMateria.includes(texto) || itemTutor.includes(texto);
+        const coincideMateria = !materia || itemMateria === materia;
+
+        return coincideTexto && coincideMateria;
     });
+
+    renderizarTarjetasDisponibilidad(filtrados);
 }
-
-// ---------------------------------------------------------------------------
-// 4. CREAR SOLICITUD DE TUTORÍA (ESTUDIANTE -> API -> BASE DE DATOS)
-// ---------------------------------------------------------------------------
-
-async function solicitarTutoria(idDisponibilidad) {
-    if (!usuarioAutenticado) {
-        alert('Debes iniciar sesión para solicitar una tutoría.');
-        return;
-    }
-
-    const noCarnet = usuarioAutenticado.noCarnetCompleto || usuarioAutenticado.username;
-
-    if (!confirm('¿Deseas confirmar la reserva para este horario de tutoría?')) return;
-
-    try {
-        // 1. Validar reglas de negocio (Traslapes y Duplicados)
-        const resVal = await fetch('api/validar_reserva.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                noCarnetEstudiante: noCarnet,
-                idDisponibilidad: idDisponibilidad
-            })
-        });
-
-        const valData = await resVal.json();
-
-        if (!valData.valido) {
-            alert('❌ ' + (valData.mensaje || 'No es posible solicitar esta tutoría.'));
-            return;
-        }
-
-        // 2. Insertar solicitud en la Base de Datos
-        const resSol = await fetch('api/solicitudes.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                noCarnetEstudiante: noCarnet,
-                idDisponibilidad: idDisponibilidad
-            })
-        });
-
-        const solData = await resSol.json();
-
-        if (solData.exito) {
-            alert('✅ ¡Solicitud de tutoría registrada con éxito!');
-            cargarDisponibilidad();
-            cargarSolicitudesEstudiante();
-            cargarMetricsDashboard();
-        } else {
-            alert('❌ ' + (solData.mensaje || 'Error al enviar la solicitud.'));
-        }
-    } catch (error) {
-        console.error('Error al solicitar tutoría:', error);
-        alert('Error de conexión al procesar la solicitud.');
-    }
-}
-
-// ---------------------------------------------------------------------------
-// 5. MIS SOLICITUDES (VISTA ESTUDIANTE -> CARGA Y CANCELACIÓN EN BASE DE DATOS)
-// ---------------------------------------------------------------------------
-
-async function cargarSolicitudesEstudiante() {
-    if (!usuarioAutenticado) return;
-
-    const tablaBody = document.getElementById('tabla-solicitudes-estudiante');
-    if (!tablaBody) return;
-
-    const noCarnet = usuarioAutenticado.noCarnetCompleto || usuarioAutenticado.username;
-
-    try {
-        const respuesta = await fetch(`api/solicitudes.php?noCarnetEstudiante=${encodeURIComponent(noCarnet)}`);
-        if (!respuesta.ok) return;
-
-        const resultado = await respuesta.json();
-        tablaBody.innerHTML = '';
-
-        if (resultado.exito && Array.isArray(resultado.datos) && resultado.datos.length > 0) {
-            resultado.datos.forEach(item => {
-                const tr = document.createElement('tr');
-                
-                let badgeClass = 'estado-pendiente';
-                if (item.estadoSolicitud === 'Aprobada') badgeClass = 'estado-aprobado';
-                if (item.estadoSolicitud === 'Rechazada') badgeClass = 'estado-rechazado';
-                if (item.estadoSolicitud === 'Cancelada') badgeClass = 'estado-rechazado';
-
-                const puedeCancelar = item.estadoSolicitud === 'Pendiente' || item.estadoSolicitud === 'Aprobada';
-
-                tr.innerHTML = `
-                    <td class="texto-resaltado">${item.nombreMateria}</td>
-                    <td>${item.nombreTutor || 'Tutor UMG'}</td>
-                    <td>${item.fecha} - ${item.horaInicio}</td>
-                    <td><span class="estado-badge ${badgeClass}">${item.estadoSolicitud}</span></td>
-                    <td class="texto-derecha">
-                        ${puedeCancelar ? `
-                            <button type="button" class="btn btn-peligro-suave" onclick="cancelarSolicitudEstudiante(${item.idSolicitud})">
-                                Cancelar
-                            </button>
-                        ` : `
-                            <span style="font-size: 0.75rem; color: #888;">N/A</span>
-                        `}
-                    </td>
-                `;
-                tablaBody.appendChild(tr);
-            });
-        } else {
-            tablaBody.innerHTML = `
-                <tr>
-                    <td colspan="5" class="texto-centro" style="padding: 1.5rem; color: #666;">
-                        No tienes solicitudes de tutoría reservadas actualmente.
-                    </td>
-                </tr>
-            `;
-        }
-    } catch (error) {
-        console.error('Error al cargar solicitudes del estudiante:', error);
-    }
-}
-
-async function cancelarSolicitudEstudiante(idSolicitud) {
-    if (!confirm('¿Estás seguro de que deseas cancelar esta solicitud de tutoría?')) return;
-
-    try {
-        const respuesta = await fetch('api/solicitudes.php', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                idSolicitud: idSolicitud,
-                estadoSolicitud: 'Cancelada'
-            })
-        });
-
-        const resultado = await respuesta.json();
-
-        if (resultado.exito) {
-            alert('✅ La solicitud ha sido cancelada exitosamente.');
-            cargarSolicitudesEstudiante();
-            cargarDisponibilidad();
-            cargarMetricsDashboard();
-        } else {
-            alert('❌ ' + (resultado.mensaje || 'Error al cancelar la solicitud.'));
-        }
-    } catch (error) {
-        console.error('Error al cancelar solicitud:', error);
-        alert('Error de conexión al intentar cancelar.');
-    }
-}
-
-// ---------------------------------------------------------------------------
-// 6. SOLICITUDES RECIBIDAS (VISTA TUTOR -> ACEPTAR/RECHAZAR EN BASE DE DATOS)
-// ---------------------------------------------------------------------------
-
-async function cargarSolicitudesTutor() {
-    if (!usuarioAutenticado || !usuarioAutenticado.idTutor) return;
-
-    const tablaBody = document.getElementById('tabla-solicitudes-tutor');
-    if (!tablaBody) return;
-
-    try {
-        const respuesta = await fetch(`api/solicitudes.php?idTutor=${usuarioAutenticado.idTutor}`);
-        if (!respuesta.ok) return;
-
-        const resultado = await respuesta.json();
-        tablaBody.innerHTML = '';
-
-        if (resultado.exito && Array.isArray(resultado.datos) && resultado.datos.length > 0) {
-            resultado.datos.forEach(item => {
-                const tr = document.createElement('tr');
-
-                let badgeClass = 'estado-pendiente';
-                if (item.estadoSolicitud === 'Aprobada') badgeClass = 'estado-aprobado';
-                if (item.estadoSolicitud === 'Rechazada') badgeClass = 'estado-rechazado';
-                if (item.estadoSolicitud === 'Cancelada') badgeClass = 'estado-rechazado';
-
-                const esPendiente = item.estadoSolicitud === 'Pendiente';
-
-                tr.innerHTML = `
-                    <td class="texto-resaltado">${item.nombreEstudiante || 'Estudiante'}</td>
-                    <td>${item.nombreMateria}</td>
-                    <td>${item.fecha} - ${item.horaInicio}</td>
-                    <td class="texto-centro">
-                        ${esPendiente ? `
-                            <div class="contenedor-acciones">
-                                <button type="button" class="btn btn-exito-suave" onclick="cambiarEstadoSolicitudTutor(${item.idSolicitud}, 'Aprobada')">
-                                    Aceptar
-                                </button>
-                                <button type="button" class="btn btn-peligro-suave" onclick="cambiarEstadoSolicitudTutor(${item.idSolicitud}, 'Rechazada')">
-                                    Rechazar
-                                </button>
-                            </div>
-                        ` : `
-                            <span class="estado-badge ${badgeClass}">${item.estadoSolicitud}</span>
-                        `}
-                    </td>
-                `;
-                tablaBody.appendChild(tr);
-            });
-        } else {
-            tablaBody.innerHTML = `
-                <tr>
-                    <td colspan="4" class="texto-centro" style="padding: 1.5rem; color: #666;">
-                        No has recibido solicitudes de tutoría aún.
-                    </td>
-                </tr>
-            `;
-        }
-    } catch (error) {
-        console.error('Error al cargar solicitudes del tutor:', error);
-    }
-}
-
-async function cambiarEstadoSolicitudTutor(idSolicitud, nuevoEstado) {
-    const accionTexto = nuevoEstado === 'Aprobada' ? 'aceptar' : 'rechazar';
-    if (!confirm(`¿Estás seguro de que deseas ${accionTexto} esta solicitud?`)) return;
-
-    try {
-        const respuesta = await fetch('api/solicitudes.php', {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                idSolicitud: idSolicitud,
-                estadoSolicitud: nuevoEstado
-            })
-        });
-
-        const resultado = await respuesta.json();
-
-        if (resultado.exito) {
-            alert(`✅ La solicitud ha sido ${nuevoEstado.toLowerCase()} correctamente.`);
-            cargarSolicitudesTutor();
-            cargarMetricsDashboard();
-        } else {
-            alert('❌ ' + (resultado.mensaje || 'Error al actualizar el estado.'));
-        }
-    } catch (error) {
-        console.error('Error al actualizar estado:', error);
-        alert('Error de conexión con el servidor.');
-    }
-}
-
-async function guardarDisponibilidad(event) {
-    if (event) event.preventDefault();
-
-    if (!usuarioAutenticado || !usuarioAutenticado.idTutor) {
-        alert('Acceso no autorizado. Debes iniciar sesión como tutor.');
-        return;
-    }
-
-    const materia = document.getElementById('disp-materia').value.trim();
-    const fecha   = document.getElementById('disp-fecha').value;
-    const hInicio = document.getElementById('disp-inicio').value;
-    const hFin    = document.getElementById('disp-fin').value;
-
-    if (!materia || !fecha || !hInicio || !hFin) {
-        alert('Por favor completa todos los campos del horario.');
-        return;
-    }
-
-    try {
-        const respuesta = await fetch('api/disponibilidad.php', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                idTutor: usuarioAutenticado.idTutor,
-                nombreMateria: materia,
-                fecha: fecha,
-                horaInicio: hInicio,
-                horaFin: hFin
-            })
-        });
-
-        const resultado = await respuesta.json();
-
-        if (resultado.exito) {
-            alert('✅ ' + resultado.mensaje);
-            document.getElementById('form-disponibilidad').reset();
-            cargarSolicitudesTutor();
-            cargarMetricsDashboard();
-        } else {
-            alert('❌ ' + resultado.mensaje);
-        }
-    } catch (error) {
-        console.error('Error al guardar disponibilidad:', error);
-        alert('Error de conexión con el servidor.');
-    }
-}
-
-// ---------------------------------------------------------------------------
-// 7. DASHBOARD METRICS
-// ---------------------------------------------------------------------------
 
 async function cargarMetricsDashboard() {
     try {
@@ -556,25 +258,241 @@ async function cargarMetricsDashboard() {
             if (elTasa) elTasa.innerText = m.tasa_atencion ?? '0%';
         }
     } catch (error) {
-        console.error('Error al cargar métricas:', error);
+        console.error('Error al cargar métricas del dashboard:', error);
     }
 }
 
 // ---------------------------------------------------------------------------
-// 8. EVENT LISTENERS Y FUNCIONES GLOBALES
+// 4. RESERVA Y GESTIÓN DE SOLICITUDES
 // ---------------------------------------------------------------------------
+
+async function solicitarTutoria(idDisponibilidad) {
+    if (!usuarioAutenticado) {
+        alert('Debes iniciar sesión para solicitar una tutoría.');
+        return;
+    }
+
+    const noCarnet = usuarioAutenticado.noCarnetCompleto || usuarioAutenticado.username;
+
+    if (!confirm('¿Deseas solicitar este horario de tutoría?')) return;
+
+    try {
+        const resVal = await fetch('api/validar_reserva.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ noCarnetEstudiante: noCarnet, idDisponibilidad: idDisponibilidad })
+        });
+        const valData = await resVal.json();
+
+        if (!valData.valido) {
+            alert('❌ ' + (valData.mensaje || 'No se puede reservar este horario.'));
+            return;
+        }
+
+        const resSol = await fetch('api/solicitudes.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ noCarnetEstudiante: noCarnet, idDisponibilidad: idDisponibilidad })
+        });
+        const solData = await resSol.json();
+
+        if (solData.exito) {
+            alert('✅ Solicitud enviada exitosamente.');
+            cargarDisponibilidad();
+            cargarMetricsDashboard();
+            cargarSolicitudesUsuario();
+        } else {
+            alert('❌ ' + (solData.mensaje || 'Error al enviar solicitud.'));
+        }
+    } catch (error) {
+        console.error('Error al procesar tutoría:', error);
+        alert('Error de conexión al procesar la reserva.');
+    }
+}
+
+async function cargarSolicitudesUsuario() {
+    if (!usuarioAutenticado) return;
+
+    const noCarnet = usuarioAutenticado.noCarnetCompleto || usuarioAutenticado.username;
+    const idTutor  = usuarioAutenticado.idTutor;
+
+    let url = 'api/solicitudes.php?';
+    if (idTutor) {
+        url += 'idTutor=' + idTutor;
+    } else {
+        url += 'noCarnetEstudiante=' + encodeURIComponent(noCarnet);
+    }
+
+    try {
+        const respuesta = await fetch(url);
+        if (!respuesta.ok) return;
+        const resultado = await respuesta.json();
+
+        if (idTutor) {
+            const tablaTutor = document.getElementById('tabla-solicitudes-tutor');
+            if (tablaTutor) {
+                tablaTutor.innerHTML = '';
+                if (resultado.exito && Array.isArray(resultado.datos) && resultado.datos.length > 0) {
+                    resultado.datos.forEach(s => {
+                        const tr = document.createElement('tr');
+                        
+                        let celdaAcciones = '';
+                        if (s.estadoSolicitud === 'Pendiente') {
+                            celdaAcciones = `
+                                <button type="button" class="btn btn-exito-suave" onclick="cambiarEstadoSolicitud(${s.idSolicitud}, 'Aprobada')">Aceptar</button>
+                                <button type="button" class="btn btn-peligro-suave" onclick="cambiarEstadoSolicitud(${s.idSolicitud}, 'Rechazada')">Rechazar</button>
+                            `;
+                        } else {
+                            celdaAcciones = `<span class="estado-badge estado-${s.estadoSolicitud.toLowerCase()}">${s.estadoSolicitud}</span>`;
+                        }
+
+                        tr.innerHTML = `
+                            <td class="texto-resaltado">${s.nombreEstudiante || s.noCarnetEstudiante}</td>
+                            <td>${s.nombreMateria}</td>
+                            <td>${s.fecha} - ${s.horaInicio}</td>
+                            <td class="texto-centro contenedor-acciones">${celdaAcciones}</td>
+                        `;
+                        tablaTutor.appendChild(tr);
+                    });
+                } else {
+                    tablaTutor.innerHTML = `<tr><td colspan="4" class="texto-centro">No hay solicitudes recibidas.</td></tr>`;
+                }
+            }
+        } else {
+            const tablaEstudiante = document.getElementById('tabla-solicitudes-estudiante');
+            if (tablaEstudiante) {
+                tablaEstudiante.innerHTML = '';
+                if (resultado.exito && Array.isArray(resultado.datos) && resultado.datos.length > 0) {
+                    resultado.datos.forEach(s => {
+                        const tr = document.createElement('tr');
+                        
+                        let celdaBoton = '';
+                        if (s.estadoSolicitud === 'Pendiente') {
+                            celdaBoton = `<button type="button" class="btn btn-peligro-suave" onclick="cancelarSolicitud(${s.idSolicitud})">Cancelar</button>`;
+                        } else {
+                            celdaBoton = `<span class="subtitulo-seccion">-</span>`;
+                        }
+
+                        tr.innerHTML = `
+                            <td class="texto-resaltado">${s.nombreMateria}</td>
+                            <td>${s.nombreTutor || 'Tutor UMG'}</td>
+                            <td>${s.fecha} - ${s.horaInicio}</td>
+                            <td><span class="estado-badge estado-${s.estadoSolicitud.toLowerCase()}">${s.estadoSolicitud}</span></td>
+                            <td class="texto-derecha">${celdaBoton}</td>
+                        `;
+                        tablaEstudiante.appendChild(tr);
+                    });
+                } else {
+                    tablaEstudiante.innerHTML = `<tr><td colspan="5" class="texto-centro">No tienes solicitudes de tutoría reservadas actualmente.</td></tr>`;
+                }
+            }
+        }
+    } catch (error) {
+        console.error('Error al cargar solicitudes:', error);
+    }
+}
+
+async function cambiarEstadoSolicitud(idSolicitud, nuevoEstado) {
+    if (!confirm(`¿Estás seguro de cambiar el estado de la solicitud a '${nuevoEstado}'?`)) return;
+
+    try {
+        const respuesta = await fetch('api/solicitudes.php', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ idSolicitud: idSolicitud, estadoSolicitud: nuevoEstado })
+        });
+        const resultado = await respuesta.json();
+
+        if (resultado.exito) {
+            alert('✅ ' + resultado.mensaje);
+            cargarSolicitudesUsuario();
+            cargarMetricsDashboard();
+        } else {
+            alert('❌ ' + resultado.mensaje);
+        }
+    } catch (error) {
+        console.error('Error al actualizar estado:', error);
+        alert('Error de conexión con el servidor.');
+    }
+}
+
+async function cancelarSolicitud(idSolicitud) {
+    if (!confirm('¿Estás seguro de cancelar esta solicitud de tutoría?')) return;
+
+    try {
+        const respuesta = await fetch('api/solicitudes.php', {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ idSolicitud: idSolicitud, estadoSolicitud: 'Cancelada' })
+        });
+        const resultado = await respuesta.json();
+
+        if (resultado.exito) {
+            alert('✅ Solicitud cancelada correctamente.');
+            cargarSolicitudesUsuario();
+            cargarDisponibilidad();
+            cargarMetricsDashboard();
+        } else {
+            alert('❌ ' + resultado.mensaje);
+        }
+    } catch (error) {
+        console.error('Error al cancelar solicitud:', error);
+        alert('Error de conexión.');
+    }
+}
+
+async function guardarDisponibilidad(event) {
+    if (event) event.preventDefault();
+
+    if (!usuarioAutenticado || !usuarioAutenticado.idTutor) {
+        alert('Acceso no autorizado. Debes iniciar sesión como tutor.');
+        return;
+    }
+
+    const materia = document.getElementById('disp-materia').value.trim();
+    const fecha = document.getElementById('disp-fecha').value;
+    const horaInicio = document.getElementById('disp-inicio').value;
+    const horaFin = document.getElementById('disp-fin').value;
+
+    try {
+        const respuesta = await fetch('api/disponibilidad.php', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                idTutor: usuarioAutenticado.idTutor,
+                nombreMateria: materia,
+                fecha: fecha,
+                horaInicio: horaInicio,
+                horaFin: horaFin
+            })
+        });
+
+        const resultado = await respuesta.json();
+        if (resultado.exito) {
+            alert('✅ ' + resultado.mensaje);
+            document.getElementById('form-disponibilidad').reset();
+            cargarDisponibilidad();
+        } else {
+            alert('❌ ' + resultado.mensaje);
+        }
+    } catch (error) {
+        console.error('Error al guardar disponibilidad:', error);
+        alert('Error de conexión con el servidor.');
+    }
+}
 
 function configurarEventos() {
-    const btnCerrarSesion = document.getElementById('btn-cerrar-sesion') || document.getElementById('btn-logout');
-    if (btnCerrarSesion) {
-        btnCerrarSesion.addEventListener('click', cerrarSesion);
-    }
+    const buscarTextoInput     = document.getElementById('buscar-texto');
+    const filtrarMateriaSelect = document.getElementById('filtrar-materia');
+
+    if (buscarTextoInput) buscarTextoInput.addEventListener('input', aplicarFiltrosTutorias);
+    if (filtrarMateriaSelect) filtrarMateriaSelect.addEventListener('change', aplicarFiltrosTutorias);
 }
 
-// Exponer funciones globales para el HTML
+// Exponer funciones globales
 window.procesarLogin = procesarLogin;
 window.cerrarSesion = cerrarSesion;
 window.solicitarTutoria = solicitarTutoria;
-window.cancelarSolicitudEstudiante = cancelarSolicitudEstudiante;
-window.cambiarEstadoSolicitudTutor = cambiarEstadoSolicitudTutor;
+window.cambiarEstadoSolicitud = cambiarEstadoSolicitud;
+window.cancelarSolicitud = cancelarSolicitud;
 window.guardarDisponibilidad = guardarDisponibilidad;

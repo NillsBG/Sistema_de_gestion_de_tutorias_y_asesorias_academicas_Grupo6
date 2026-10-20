@@ -1,5 +1,5 @@
 <?php
-// php/login.php - Autenticación con Validación de Rol (Estudiante vs Tutor)
+// php/login.php - Autenticación por Usuario y Detección Automática de Rol
 session_start();
 header('Content-Type: application/json; charset=utf-8');
 
@@ -18,20 +18,17 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 $input = json_decode(file_get_contents('php://input'), true) ?? $_POST;
 
-$correo = trim($input['correo'] ?? $input['username'] ?? $input['login-correo'] ?? '');
-$clave  = trim($input['clave'] ?? $input['contrasena'] ?? $input['login-clave'] ?? '');
-$rolSeleccionado = strtolower(trim($input['rol'] ?? ''));
+$usuarioIngresado = trim($input['usuario'] ?? $input['username'] ?? $input['login-usuario'] ?? $input['login-correo'] ?? '');
+$clave             = trim($input['clave'] ?? $input['contrasena'] ?? $input['login-clave'] ?? '');
 
-if (empty($correo) || empty($clave)) {
-    echo json_encode(['exito' => false, 'mensaje' => 'Por favor ingresa tu correo y contraseña.']);
+if (empty($usuarioIngresado) || empty($clave)) {
+    echo json_encode(['exito' => false, 'mensaje' => 'Por favor ingresa tu usuario y contraseña.']);
     exit;
 }
 
-// Extraer usuario si ingresan correo completo (@umg.edu.gt)
-$userLimpio = (strpos($correo, '@') !== false) ? explode('@', $correo)[0] : $correo;
+$userLimpio = (strpos($usuarioIngresado, '@') !== false) ? explode('@', $usuarioIngresado)[0] : $usuarioIngresado;
 
 try {
-    // Consulta con 3 parámetros posicionales (?)
     $stmt = $pdo->prepare("
         SELECT 
             u.idUsuario, 
@@ -53,10 +50,9 @@ try {
         LIMIT 1
     ");
     
-    $stmt->execute([$userLimpio, $correo, $userLimpio]);
+    $stmt->execute([$userLimpio, $usuarioIngresado, $userLimpio]);
     $usuario = $stmt->fetch(PDO::FETCH_ASSOC);
 
-    // 1. Validar si el usuario existe y la contraseña es correcta
     $esValida = false;
     if ($usuario) {
         if (password_verify($clave, $usuario['contrasena']) || $clave === $usuario['contrasena']) {
@@ -65,32 +61,12 @@ try {
     }
 
     if (!$esValida) {
-        echo json_encode(['exito' => false, 'mensaje' => 'Correo o contraseña incorrectos.']);
+        echo json_encode(['exito' => false, 'mensaje' => 'Usuario o contraseña incorrectos.']);
         exit;
     }
 
-    // 2. Validar que el rol seleccionado en el formulario coincida con el rol real en la base de datos
-    $rolRealDB = strtolower($usuario['nombreRol']); // 'estudiante', 'tutor', 'administrador'
+    $rolRealDB = strtolower($usuario['nombreRol']);
 
-    if (!empty($rolSeleccionado)) {
-        if ($rolSeleccionado === 'estudiante' && $rolRealDB !== 'estudiante') {
-            echo json_encode([
-                'exito' => false, 
-                'mensaje' => '❌ Acceso denegado: Tu cuenta no es de perfil Estudiante. Selecciona el perfil "' . ucfirst($rolRealDB) . '" para ingresar.'
-            ]);
-            exit;
-        }
-
-        if ($rolSeleccionado === 'tutor' && $rolRealDB !== 'tutor' && $rolRealDB !== 'administrador') {
-            echo json_encode([
-                'exito' => false, 
-                'mensaje' => '❌ Acceso denegado: Tu cuenta no tiene permisos de Tutor. Selecciona el perfil "' . ucfirst($rolRealDB) . '" para ingresar.'
-            ]);
-            exit;
-        }
-    }
-
-    // 3. Inicio de sesión exitoso
     $_SESSION['idUsuario'] = $usuario['idUsuario'];
     $_SESSION['username']  = $usuario['username'];
     $_SESSION['rol']       = $usuario['nombreRol'];

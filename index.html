@@ -51,20 +51,8 @@
 
                 <form id="form-login" onsubmit="procesarLogin(event)">
                     <div class="grupo-campo">
-                        <label class="etiqueta-campo">Tipo de Perfil</label>
-                        <div class="selector-rol">
-                            <label class="opcion-rol">
-                                <input type="radio" name="rol" value="estudiante" checked> Estudiante
-                            </label>
-                            <label class="opcion-rol">
-                                <input type="radio" name="rol" value="tutor"> Tutor
-                            </label>
-                        </div>
-                    </div>
-
-                    <div class="grupo-campo">
-                        <label for="login-correo" class="etiqueta-campo">Correo Electrónico</label>
-                        <input type="email" id="login-correo" class="campo-entrada" required placeholder="mcorzo@umg.edu.gt">
+                        <label for="login-usuario" class="etiqueta-campo">Usuario / Nombre de Usuario</label>
+                        <input type="text" id="login-usuario" class="campo-entrada" required placeholder="mcorzo, nberducido, vchavez">
                     </div>
 
                     <div class="grupo-campo">
@@ -97,7 +85,6 @@
                             <option value="Desarrollo Web">Desarrollo Web</option>
                             <option value="Bases de Datos">Bases de Datos</option>
                             <option value="Análisis de Sistemas">Análisis de Sistemas</option>
-                            <option value="Electrónica">Electrónica</option>
                         </select>
                     </div>
                 </div>
@@ -195,4 +182,5 @@
 
     <script src="js/app.js"></script>
 </body>
+
 </html>
