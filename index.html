@@ -13,7 +13,7 @@
 </head>
 
 <body>
-    <!-- Navbar (Se activa al iniciar sesión) -->
+    <!-- Navbar -->
     <header id="encabezado" class="encabezado oculto">
         <div class="logotipo">
             <div class="icono-logo">
@@ -25,7 +25,6 @@
             </div>
         </div>
 
-        <!-- Barra de Usuario en Sesión -->
         <div id="barra-usuario" class="barra-usuario">
             <span id="info-usuario-nombre" class="nombre-usuario"></span>
             <span id="info-usuario-rol" class="badge-rol"></span>
@@ -35,10 +34,9 @@
         </div>
     </header>
 
-    <!-- Contenedor de vistas principales -->
     <main class="contenedor-principal">
 
-        <!-- Vista de login -->
+        <!-- Vista de Login -->
         <section id="vista-login">
             <div class="encabezado-empresa">
                 <h1 id="titulo-empresa" class="titulo-empresa">Sistema de Gestión de Tutorías Académicas</h1>
@@ -47,7 +45,7 @@
 
             <div class="tarjeta tarjeta-login">
                 <h2 class="titulo-seccion texto-centro">Iniciar Sesión</h2>
-                <p class="subtitulo-seccion texto-centro">Ingresa tus credenciales institucionales para acceder.</p>
+                <p class="subtitulo-seccion texto-centro">Ingresa tu usuario institucional para acceder.</p>
 
                 <form id="form-login" onsubmit="procesarLogin(event)">
                     <div class="grupo-campo">
@@ -67,21 +65,28 @@
             </div>
         </section>
 
-        <!-- Vista portal del estudiante -->
+        <!-- Vista Portal del Estudiante -->
         <section id="vista-estudiante" class="oculto">
             <div class="tarjeta mb-lg">
-                <h2 class="titulo-seccion">Portal del Estudiante</h2>
-                <p class="subtitulo-seccion">Consulta la oferta de tutorías disponibles y gestiona tus citas académicas.</p>
+                <div class="encabezado-portal">
+                    <div>
+                        <h2 class="titulo-seccion">Portal del Estudiante</h2>
+                        <p class="subtitulo-seccion">Consulta la oferta de tutorías exclusivas de tu carrera y gestiona tus citas.</p>
+                    </div>
+                    <div id="badge-carrera-estudiante" class="badge-carrera">
+                        <i class="fa-solid fa-graduation-cap"></i> <span id="nombre-carrera-texto">0901 - Ingeniería en Sistemas</span>
+                    </div>
+                </div>
 
-                <div class="grid-filtros">
+                <div class="grid-filtros mt-sm">
                     <div>
                         <label for="buscar-texto" class="etiqueta-campo">Buscar por Tutor o Curso</label>
-                        <input type="text" id="buscar-texto" class="campo-entrada" placeholder="Ej. Desarrollo Web, Ing. Domínguez...">
+                        <input type="text" id="buscar-texto" class="campo-entrada" placeholder="Ej. Desarrollo Web, Ing. Berducido...">
                     </div>
                     <div>
                         <label for="filtrar-materia" class="etiqueta-campo">Filtrar por Materia</label>
                         <select id="filtrar-materia" class="campo-entrada">
-                            <option value="">Todas las materias</option>
+                            <option value="">Todas las materias de la carrera</option>
                             <option value="Desarrollo Web">Desarrollo Web</option>
                             <option value="Bases de Datos">Bases de Datos</option>
                             <option value="Análisis de Sistemas">Análisis de Sistemas</option>
@@ -90,11 +95,30 @@
                 </div>
             </div>
 
-            <h3 class="subtitulo-bloque">Espacios Disponibles para Citas</h3>
-            <div id="contenedor-disponibilidad" class="grid-tarjetas mb-lg">
-                <!-- Se renderiza dinámicamente desde JS (app.js) -->
+            <!-- SECCIÓN DEL SLIDER / CARRUSEL -->
+            <div class="seccion-carrusel-encabezado">
+                <h3 class="subtitulo-bloque"><i class="fa-solid fa-sliders icono-oro"></i> Cursos Disponibles para Citas</h3>
+                <div class="controles-carrusel">
+                    <button type="button" class="btn-carrusel" onclick="moverCarrusel(-1)" title="Anterior">
+                        <i class="fa-solid fa-chevron-left"></i>
+                    </button>
+                    <button type="button" class="btn-carrusel" onclick="moverCarrusel(1)" title="Siguiente">
+                        <i class="fa-solid fa-chevron-right"></i>
+                    </button>
+                </div>
             </div>
 
+            <!-- CONTENEDOR SLIDER CON MÁSCARA -->
+            <div class="carrusel-mascara mb-sm">
+                <div id="contenedor-disponibilidad" class="carrusel-pista">
+                    <!-- Tarjetas inyectadas dinámicamente desde app.js -->
+                </div>
+            </div>
+
+            <!-- INDICADORES (PUNTOS) -->
+            <div id="carrusel-indicadores" class="carrusel-indicadores mb-lg"></div>
+
+            <!-- TABLA DE MIS SOLICITUDES -->
             <div class="tarjeta">
                 <h3 class="subtitulo-bloque">Mis Solicitudes de Tutoría</h3>
                 <p class="subtitulo-seccion">Estado actual de las citas que has reservado.</p>
@@ -111,14 +135,14 @@
                             </tr>
                         </thead>
                         <tbody id="tabla-solicitudes-estudiante">
-                            <!-- Se renderiza dinámicamente desde JS (app.js) -->
+                            <!-- Filas dinámicas -->
                         </tbody>
                     </table>
                 </div>
             </div>
         </section>
 
-        <!-- Vista del portal de tutor -->
+        <!-- Vista Portal de Tutor -->
         <section id="vista-tutor" class="oculto">
             <div class="grid-dos-columnas">
                 <div class="tarjeta">
@@ -165,7 +189,7 @@
                                 </tr>
                             </thead>
                             <tbody id="tabla-solicitudes-tutor">
-                                <!-- Se renderiza dinámicamente desde JS (app.js) -->
+                                <!-- Filas dinámicas -->
                             </tbody>
                         </table>
                     </div>
@@ -174,7 +198,6 @@
         </section>
     </main>
 
-    <!-- Pie de página -->
     <footer class="pie-pagina">
         <p>Universidad Mariano Gálvez de Guatemala · Facultad de Ingeniería en Sistemas</p>
         <p class="creditos-equipo">Proyecto Final - Desarrollo Web (Grupo 6)</p>
@@ -182,5 +205,4 @@
 
     <script src="js/app.js"></script>
 </body>
-
 </html>
