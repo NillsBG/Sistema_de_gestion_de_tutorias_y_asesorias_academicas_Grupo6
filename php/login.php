@@ -1,5 +1,5 @@
 <?php
-// php/login.php - Autenticación por Usuario y Detección Automática de Rol
+// php/login.php - Retorna datos del usuario y carrera asociada (0901)
 session_start();
 header('Content-Type: application/json; charset=utf-8');
 
@@ -18,7 +18,7 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 $input = json_decode(file_get_contents('php://input'), true) ?? $_POST;
 
-$usuarioIngresado = trim($input['usuario'] ?? $input['username'] ?? $input['login-usuario'] ?? $input['login-correo'] ?? '');
+$usuarioIngresado = trim($input['usuario'] ?? $input['username'] ?? $input['login-usuario'] ?? '');
 $clave             = trim($input['clave'] ?? $input['contrasena'] ?? $input['login-clave'] ?? '');
 
 if (empty($usuarioIngresado) || empty($clave)) {
@@ -37,13 +37,17 @@ try {
             u.estado,
             r.nombreRol,
             e.noCarnetCompleto,
+            e.codigoCarreraEstudiante,
             e.nombreEstudiante,
+            c.nombreCarrera,
+            c.codigoCarrera,
             t.idTutor,
             t.nombreTutor
         FROM tblUsuarios u
         INNER JOIN tblAsignacionRoles ar ON u.idUsuario = ar.idUsuario
         INNER JOIN tblRoles r ON ar.idRol = r.idRol
         LEFT JOIN tblEstudiantes e ON u.idUsuario = e.idUsuario
+        LEFT JOIN tblCarreras c ON e.idCarrera = c.idCarrera
         LEFT JOIN tblTutores t ON u.idUsuario = t.idUsuario
         WHERE (u.username = ? OR u.username = ? OR e.noCarnetCompleto = ?)
           AND u.estado = 'Activo'
@@ -74,8 +78,12 @@ try {
     $nombreCompleto = $usuario['nombreEstudiante'] ?? $usuario['nombreTutor'] ?? $usuario['username'];
     $_SESSION['nombre']    = $nombreCompleto;
 
+    $codigoCarrera = $usuario['codigoCarreraEstudiante'] ?? $usuario['codigoCarrera'] ?? '0901';
+    $nombreCarrera = $usuario['nombreCarrera'] ?? 'Ingeniería en Sistemas';
+
     if ($rolRealDB === 'estudiante') {
         $_SESSION['noCarnetCompleto'] = $usuario['noCarnetCompleto'];
+        $_SESSION['codigoCarrera']    = $codigoCarrera;
     } elseif ($rolRealDB === 'tutor' || $rolRealDB === 'administrador') {
         $_SESSION['idTutor'] = $usuario['idTutor'];
     }
@@ -89,6 +97,8 @@ try {
             'rol'              => $usuario['nombreRol'],
             'nombre'           => $nombreCompleto,
             'noCarnetCompleto' => $usuario['noCarnetCompleto'] ?? null,
+            'codigoCarrera'    => $codigoCarrera,
+            'nombreCarrera'    => $nombreCarrera,
             'idTutor'          => $usuario['idTutor'] ?? null
         ]
     ], JSON_UNESCAPED_UNICODE);
