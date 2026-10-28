@@ -1,14 +1,12 @@
 <?php
-// php/login.php - Retorna datos del usuario y carrera asociada (0901)
+// php/login.php - Autenticación Segura y Detección de Rol / Carrera
 session_start();
 header('Content-Type: application/json; charset=utf-8');
 
 if (file_exists('../api/conexion.php')) {
     require_once '../api/conexion.php';
-} elseif (file_exists('api/conexion.php')) {
-    require_once 'api/conexion.php';
 } else {
-    require_once 'conexion.php';
+    require_once 'api/conexion.php';
 }
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
@@ -17,16 +15,13 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 $input = json_decode(file_get_contents('php://input'), true) ?? $_POST;
-
-$usuarioIngresado = trim($input['usuario'] ?? $input['username'] ?? $input['login-usuario'] ?? '');
-$clave             = trim($input['clave'] ?? $input['contrasena'] ?? $input['login-clave'] ?? '');
+$usuarioIngresado = trim($input['usuario'] ?? $input['username'] ?? '');
+$clave             = trim($input['clave'] ?? $input['contrasena'] ?? '');
 
 if (empty($usuarioIngresado) || empty($clave)) {
     echo json_encode(['exito' => false, 'mensaje' => 'Por favor ingresa tu usuario y contraseña.']);
     exit;
 }
-
-$userLimpio = (strpos($usuarioIngresado, '@') !== false) ? explode('@', $usuarioIngresado)[0] : $usuarioIngresado;
 
 try {
     $stmt = $pdo->prepare("
@@ -42,19 +37,21 @@ try {
             c.nombreCarrera,
             c.codigoCarrera,
             t.idTutor,
-            t.nombreTutor
+            t.nombreTutor,
+            t.tituloProfesional,
+            t.especialidad
         FROM tblUsuarios u
         INNER JOIN tblAsignacionRoles ar ON u.idUsuario = ar.idUsuario
         INNER JOIN tblRoles r ON ar.idRol = r.idRol
         LEFT JOIN tblEstudiantes e ON u.idUsuario = e.idUsuario
         LEFT JOIN tblCarreras c ON e.idCarrera = c.idCarrera
         LEFT JOIN tblTutores t ON u.idUsuario = t.idUsuario
-        WHERE (u.username = ? OR u.username = ? OR e.noCarnetCompleto = ?)
+        WHERE (u.username = ? OR e.noCarnetCompleto = ?)
           AND u.estado = 'Activo'
         LIMIT 1
     ");
     
-    $stmt->execute([$userLimpio, $usuarioIngresado, $userLimpio]);
+    $stmt->execute([$usuarioIngresado, $usuarioIngresado]);
     $usuario = $stmt->fetch(PDO::FETCH_ASSOC);
 
     $esValida = false;
@@ -84,8 +81,11 @@ try {
     if ($rolRealDB === 'estudiante') {
         $_SESSION['noCarnetCompleto'] = $usuario['noCarnetCompleto'];
         $_SESSION['codigoCarrera']    = $codigoCarrera;
-    } elseif ($rolRealDB === 'tutor' || $rolRealDB === 'administrador') {
-        $_SESSION['idTutor'] = $usuario['idTutor'];
+        $_SESSION['nombreCarrera']    = $nombreCarrera;
+    } elseif ($rolRealDB === 'tutor') {
+        $_SESSION['idTutor']           = $usuario['idTutor'];
+        $_SESSION['tituloProfesional'] = $usuario['tituloProfesional'];
+        $_SESSION['especialidad']      = $usuario['especialidad'];
     }
 
     echo json_encode([

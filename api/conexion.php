@@ -1,8 +1,9 @@
 <?php
-// api/conexion.php - Conexión PDO Inteligente (Prueba varias claves automáticamente)
-$host    = '127.0.0.1';
-$db      = 'tutoria_umg';
-$user    = 'root';
+// api/conexion.php - Conexión Segura PDO a MySQL
+$host = '127.0.0.1';
+$db   = 'tutoria_umg';
+$user = 'root';
+$pass = '1234';
 $charset = 'utf8mb4';
 
 $options = [
@@ -11,27 +12,11 @@ $options = [
     PDO::ATTR_EMULATE_PREPARES   => false,
 ];
 
-$pdo = null;
-$clavesAProbar = ['1234', '', 'root', 'admin'];
-$ultimoError = '';
-
-foreach ($clavesAProbar as $pass) {
-    try {
-        $dsn = "mysql:host=$host;dbname=$db;charset=$charset";
-        $pdo = new PDO($dsn, $user, $pass, $options);
-        break; // Conexión exitosa
-    } catch (\PDOException $e) {
-        $ultimoError = $e->getMessage();
-    }
-}
-
-if (!$pdo) {
+try {
+    $pdo = new PDO("mysql:host=$host;dbname=$db;charset=$charset", $user, $pass, $options);
+} catch (PDOException $e) {
     http_response_code(500);
-    header('Content-Type: application/json; charset=utf-8');
-    echo json_encode([
-        'exito' => false, 
-        'mensaje' => 'Error al conectar a la base de datos tutoria_umg: ' . $ultimoError
-    ], JSON_UNESCAPED_UNICODE);
+    echo json_encode(['exito' => false, 'mensaje' => 'Error de conexión a la base de datos: ' . $e->getMessage()]);
     exit;
 }
 ?>
