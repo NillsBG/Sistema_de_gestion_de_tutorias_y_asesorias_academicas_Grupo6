@@ -300,6 +300,23 @@ body {
     border-radius: 10px;
 }
 
+/* SLIDER DEL TUTOR: una tarjeta por vista para que quepan los botones Editar / Eliminar */
+#slider-tutor-pista .tarjeta-carrusel-item {
+    flex: 0 0 100%;
+    max-width: 100%;
+}
+
+.acciones-tarjeta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.acciones-tarjeta .btn {
+    flex: 1 1 auto;
+    white-space: nowrap;
+}
+
 /* TABLAS Y BADGES */
 .contenedor-tabla { overflow-x: auto; }
 .tabla-datos { width: 100%; border-collapse: collapse; margin-top: 0.5rem; }

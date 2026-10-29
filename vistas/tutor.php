@@ -48,10 +48,41 @@ verificarRol(['Tutor', 'Administrador']);
                                 <option value="">Cargando cursos asignados...</option>
                             </select>
                         </div>
+
                         <div class="grupo-campo">
-                            <label for="disp-fecha" class="etiqueta-campo">Fecha de Atención</label>
+                            <label for="disp-fecha" class="etiqueta-campo">Fecha de Inicio</label>
                             <input type="date" id="disp-fecha" class="campo-entrada" required>
                         </div>
+
+                        <div class="grupo-campo">
+                            <label for="disp-dias-semana" class="etiqueta-campo">¿Cuántos días a la semana la impartirás?</label>
+                            <select id="disp-dias-semana" class="campo-entrada" onchange="limitarDiasSeleccionados()">
+                                <option value="1">1 día</option>
+                                <option value="2">2 días</option>
+                                <option value="3">3 días</option>
+                                <option value="4">4 días</option>
+                                <option value="5">5 días</option>
+                            </select>
+                        </div>
+
+                        <div class="grupo-campo">
+                            <label class="etiqueta-campo">Días de la semana</label>
+                            <div style="display:flex; flex-wrap:wrap; gap:0.75rem;">
+                                <label><input type="checkbox" class="disp-dia" value="1" onchange="validarDiasSeleccionados(this)"> Lunes</label>
+                                <label><input type="checkbox" class="disp-dia" value="2" onchange="validarDiasSeleccionados(this)"> Martes</label>
+                                <label><input type="checkbox" class="disp-dia" value="3" onchange="validarDiasSeleccionados(this)"> Miércoles</label>
+                                <label><input type="checkbox" class="disp-dia" value="4" onchange="validarDiasSeleccionados(this)"> Jueves</label>
+                                <label><input type="checkbox" class="disp-dia" value="5" onchange="validarDiasSeleccionados(this)"> Viernes</label>
+                                <label><input type="checkbox" class="disp-dia" value="6" onchange="validarDiasSeleccionados(this)"> Sábado</label>
+                                <label><input type="checkbox" class="disp-dia" value="7" onchange="validarDiasSeleccionados(this)"> Domingo</label>
+                            </div>
+                        </div>
+
+                        <div class="grupo-campo">
+                            <label for="disp-semanas" class="etiqueta-campo">¿Durante cuántas semanas?</label>
+                            <input type="number" id="disp-semanas" class="campo-entrada" min="1" max="16" value="1">
+                        </div>
+
                         <div class="grid-dos-campos grupo-campo">
                             <div>
                                 <label for="disp-inicio" class="etiqueta-campo">Hora Inicio</label>
