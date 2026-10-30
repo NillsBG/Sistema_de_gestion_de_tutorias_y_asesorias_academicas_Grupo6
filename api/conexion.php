@@ -3,7 +3,7 @@
 $host = '127.0.0.1';
 $db   = 'tutoria_umg';
 $user = 'root';
-$pass = '';
+$pass = '1234';
 $charset = 'utf8mb4';
 
 $options = [

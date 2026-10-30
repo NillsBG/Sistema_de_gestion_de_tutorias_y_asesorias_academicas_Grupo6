@@ -36,93 +36,94 @@ verificarRol(['Tutor', 'Administrador']);
     <main class="contenedor-principal">
         <section id="vista-tutor">
             <!-- SECCIÓN 1: FORMULARIO DE APERTURA DE DISPONIBILIDAD -->
-            <div class="grid-dos-columnas mb-lg">
-                <div class="tarjeta">
-                    <h3 class="subtitulo-bloque"><i class="fa-solid fa-plus-circle icono-oro"></i> Abrir Nuevo Espacio de Tutoría</h3>
-                    <p class="subtitulo-seccion">Selecciona un curso asignado a tu perfil por el Administrador y define el horario de atención.</p>
+            <div class="tarjeta mb-lg">
+                <h3 class="subtitulo-bloque"><i class="fa-solid fa-plus-circle icono-oro"></i> Abrir Nuevo Espacio de Tutoría</h3>
+                <p class="subtitulo-seccion">Selecciona un curso asignado a tu perfil por el Administrador, establece los días de impartición y el horario.</p>
 
-                    <form id="form-disponibilidad" onsubmit="guardarDisponibilidad(event)">
-                        <div class="grupo-campo">
-                            <label for="disp-curso" class="etiqueta-campo">Curso Asignado a tu Perfil</label>
-                            <select id="disp-curso" class="campo-entrada" required>
-                                <option value="">Cargando cursos asignados...</option>
-                            </select>
-                        </div>
-
-                        <div class="grupo-campo">
-                            <label for="disp-fecha" class="etiqueta-campo">Fecha de Inicio</label>
-                            <input type="date" id="disp-fecha" class="campo-entrada" required>
-                        </div>
-
-                        <div class="grupo-campo">
-                            <label for="disp-dias-semana" class="etiqueta-campo">¿Cuántos días a la semana la impartirás?</label>
-                            <select id="disp-dias-semana" class="campo-entrada" onchange="limitarDiasSeleccionados()">
-                                <option value="1">1 día</option>
-                                <option value="2">2 días</option>
-                                <option value="3">3 días</option>
-                                <option value="4">4 días</option>
-                                <option value="5">5 días</option>
-                            </select>
-                        </div>
-
-                        <div class="grupo-campo">
-                            <label class="etiqueta-campo">Días de la semana</label>
-                            <div style="display:flex; flex-wrap:wrap; gap:0.75rem;">
-                                <label><input type="checkbox" class="disp-dia" value="1" onchange="validarDiasSeleccionados(this)"> Lunes</label>
-                                <label><input type="checkbox" class="disp-dia" value="2" onchange="validarDiasSeleccionados(this)"> Martes</label>
-                                <label><input type="checkbox" class="disp-dia" value="3" onchange="validarDiasSeleccionados(this)"> Miércoles</label>
-                                <label><input type="checkbox" class="disp-dia" value="4" onchange="validarDiasSeleccionados(this)"> Jueves</label>
-                                <label><input type="checkbox" class="disp-dia" value="5" onchange="validarDiasSeleccionados(this)"> Viernes</label>
-                                <label><input type="checkbox" class="disp-dia" value="6" onchange="validarDiasSeleccionados(this)"> Sábado</label>
-                                <label><input type="checkbox" class="disp-dia" value="7" onchange="validarDiasSeleccionados(this)"> Domingo</label>
+                <form id="form-disponibilidad" onsubmit="guardarDisponibilidad(event)">
+                    <div class="grid-dos-columnas">
+                        <div>
+                            <div class="grupo-campo">
+                                <label for="disp-curso" class="etiqueta-campo">Curso Asignado a tu Perfil</label>
+                                <select id="disp-curso" class="campo-entrada" required>
+                                    <option value="">Cargando cursos asignados...</option>
+                                </select>
                             </div>
-                        </div>
 
-                        <div class="grupo-campo">
-                            <label for="disp-semanas" class="etiqueta-campo">¿Durante cuántas semanas?</label>
-                            <input type="number" id="disp-semanas" class="campo-entrada" min="1" max="16" value="1">
-                        </div>
-
-                        <div class="grid-dos-campos grupo-campo">
-                            <div>
-                                <label for="disp-inicio" class="etiqueta-campo">Hora Inicio</label>
-                                <input type="time" id="disp-inicio" class="campo-entrada" required>
+                            <div class="grupo-campo">
+                                <label for="disp-fecha" class="etiqueta-campo">Fecha de Inicio</label>
+                                <input type="date" id="disp-fecha" class="campo-entrada" required>
                             </div>
-                            <div>
-                                <label for="disp-duracion" class="etiqueta-campo">Duración (Minutos)</label>
-                                <select id="disp-duracion" class="campo-entrada">
-                                    <option value="30">30 minutos</option>
-                                    <option value="45" selected>45 minutos</option>
-                                    <option value="60">60 minutos (1 hora)</option>
-                                    <option value="90">90 minutos (1.5 horas)</option>
+
+                            <div class="grupo-campo">
+                                <label for="disp-dias-semana" class="etiqueta-campo">¿Cuántos días a la semana la impartirás?</label>
+                                <select id="disp-dias-semana" class="campo-entrada" onchange="limitarDiasSeleccionados()">
+                                    <option value="1">1 día</option>
+                                    <option value="2">2 días</option>
+                                    <option value="3">3 días</option>
+                                    <option value="4">4 días</option>
+                                    <option value="5">5 días</option>
                                 </select>
                             </div>
                         </div>
-                        <button type="submit" class="btn btn-oro ancho-total mt-sm">
-                            <i class="fa-solid fa-calendar-plus"></i> Publicar Horario de Tutoría
-                        </button>
-                    </form>
-                </div>
 
-                <!-- SLIDER DE MIS TUTORÍAS PUBLICADAS -->
-                <div class="tarjeta">
-                    <div class="seccion-carrusel-encabezado">
-                        <h3 class="subtitulo-bloque"><i class="fa-solid fa-sliders icono-oro"></i> Mis Tutorías Publicadas</h3>
-                        <div class="controles-carrusel">
-                            <button type="button" class="btn-carrusel" onclick="moverSliderTutor(-1)"><i class="fa-solid fa-chevron-left"></i></button>
-                            <button type="button" class="btn-carrusel" onclick="moverSliderTutor(1)"><i class="fa-solid fa-chevron-right"></i></button>
+                        <div>
+                            <div class="grupo-campo">
+                                <label class="etiqueta-campo">Días de la semana</label>
+                                <div style="display:flex; flex-wrap:wrap; gap:0.75rem; background:#ffffff; padding:0.75rem; border:1px solid var(--color-borde); border-radius:10px;">
+                                    <label><input type="checkbox" class="disp-dia" value="1" onchange="validarDiasSeleccionados(this)"> Lunes</label>
+                                    <label><input type="checkbox" class="disp-dia" value="2" onchange="validarDiasSeleccionados(this)"> Martes</label>
+                                    <label><input type="checkbox" class="disp-dia" value="3" onchange="validarDiasSeleccionados(this)"> Miércoles</label>
+                                    <label><input type="checkbox" class="disp-dia" value="4" onchange="validarDiasSeleccionados(this)"> Jueves</label>
+                                    <label><input type="checkbox" class="disp-dia" value="5" onchange="validarDiasSeleccionados(this)"> Viernes</label>
+                                    <label><input type="checkbox" class="disp-dia" value="6" onchange="validarDiasSeleccionados(this)"> Sábado</label>
+                                    <label><input type="checkbox" class="disp-dia" value="7" onchange="validarDiasSeleccionados(this)"> Domingo</label>
+                                </div>
+                            </div>
+
+                            <div class="grid-dos-campos grupo-campo">
+                                <div>
+                                    <label for="disp-inicio" class="etiqueta-campo">Hora Inicio</label>
+                                    <input type="time" id="disp-inicio" class="campo-entrada" required>
+                                </div>
+                                <div>
+                                    <label for="disp-duracion" class="etiqueta-campo">Duración (Minutos)</label>
+                                    <select id="disp-duracion" class="campo-entrada">
+                                        <option value="30">30 minutos</option>
+                                        <option value="45" selected>45 minutos</option>
+                                        <option value="60">60 minutos (1 hora)</option>
+                                        <option value="90">90 minutos (1.5 horas)</option>
+                                    </select>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="carrusel-mascara">
-                        <div id="slider-tutor-pista" class="carrusel-pista">
-                            <!-- Carga dinámicamente vía js/tutor.js -->
-                        </div>
-                    </div>
-                </div>
+                    <button type="submit" class="btn btn-oro ancho-total mt-sm">
+                        <i class="fa-solid fa-calendar-plus"></i> Publicar Horario de Tutoría
+                    </button>
+                </form>
             </div>
 
-            <!-- SECCIÓN 2: SOLICITUDES RECIBIDAS -->
+            <!-- SECCIÓN 2: SLIDER DE MIS TUTORÍAS PUBLICADAS (ORGANIZADO EN 4 COLUMNAS) -->
+            <div class="tarjeta mb-lg">
+                <div class="seccion-carrusel-encabezado">
+                    <h3 class="subtitulo-bloque"><i class="fa-solid fa-sliders icono-oro"></i> Mis Tutorías Publicadas</h3>
+                    <div class="controles-carrusel">
+                        <button type="button" class="btn-carrusel" onclick="moverSliderTutor(-1)"><i class="fa-solid fa-chevron-left"></i></button>
+                        <button type="button" class="btn-carrusel" onclick="moverSliderTutor(1)"><i class="fa-solid fa-chevron-right"></i></button>
+                    </div>
+                </div>
+
+                <div class="carrusel-mascara mb-sm">
+                    <div id="slider-tutor-pista" class="carrusel-pista">
+                        <!-- Carga dinámicamente vía js/tutor.js (4 tarjetas por vista) -->
+                    </div>
+                </div>
+                <div id="indicadores-tutor-pista" class="carrusel-indicadores"></div>
+            </div>
+
+            <!-- SECCIÓN 3: SOLICITUDES RECIBIDAS -->
             <div class="tarjeta">
                 <h3 class="subtitulo-bloque"><i class="fa-solid fa-inbox icono-oro"></i> Solicitudes Recibidas de Estudiantes</h3>
                 <p class="subtitulo-seccion">Gestiona las reservas solicitadas por los alumnos para tus materias.</p>

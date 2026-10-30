@@ -35,12 +35,12 @@ verificarRol(['Estudiante']);
 
     <main class="contenedor-principal">
         <section id="vista-estudiante">
-            <!-- BANNER Y FILTRO DE CARRERA ESTRICTO -->
+            <!-- BANNER Y FILTROS -->
             <div class="tarjeta mb-lg">
                 <div class="encabezado-portal">
                     <div>
                         <h2 class="titulo-seccion">Portal del Estudiante</h2>
-                        <p class="subtitulo-seccion">Consulta las tutorías asignadas exclusivamente a tu carrera y reserva tu cita.</p>
+                        <p class="subtitulo-seccion">Consulta la oferta de tutorías exclusivas de tu carrera y gestiona tus reservas.</p>
                     </div>
                     <div class="badge-carrera">
                         <i class="fa-solid fa-book-bookmark"></i>
@@ -62,7 +62,7 @@ verificarRol(['Estudiante']);
                 </div>
             </div>
 
-            <!-- SLIDER / CARRUSEL DE CURSOS DISPONIBLES -->
+            <!-- SECCIÓN 1: SLIDER DE CURSOS DISPONIBLES DE TU CARRERA -->
             <div class="seccion-carrusel-encabezado">
                 <h3 class="subtitulo-bloque"><i class="fa-solid fa-sliders icono-oro"></i> Cursos Disponibles de tu Carrera</h3>
                 <div class="controles-carrusel">
@@ -76,13 +76,31 @@ verificarRol(['Estudiante']);
                     <!-- Se carga dinámicamente vía js/estudiante.js -->
                 </div>
             </div>
-
             <div id="carrusel-indicadores" class="carrusel-indicadores mb-lg"></div>
 
-            <!-- TABLA DE MIS SOLICITUDES -->
+            <!-- SECCIÓN 2: NUEVA TARJETA / SLIDER DE MIS TUTORÍAS ASIGNADAS E INSCRITAS -->
+            <div class="tarjeta mb-lg">
+                <div class="seccion-carrusel-encabezado">
+                    <h3 class="subtitulo-bloque"><i class="fa-solid fa-user-check icono-oro"></i> Mis Tutorías Asignadas e Inscritas</h3>
+                    <div class="controles-carrusel">
+                        <button type="button" class="btn-carrusel" onclick="moverSliderInscritos(-1)"><i class="fa-solid fa-chevron-left"></i></button>
+                        <button type="button" class="btn-carrusel" onclick="moverSliderInscritos(1)"><i class="fa-solid fa-chevron-right"></i></button>
+                    </div>
+                </div>
+                <p class="subtitulo-seccion mb-sm">Visualiza las tutorías en las que estás inscrito con su información completa (Tutor, Días, Horario y Estado).</p>
+
+                <div class="carrusel-mascara mb-sm">
+                    <div id="slider-inscritos-pista" class="carrusel-pista">
+                        <!-- Carga dinámicamente en tarjetas -->
+                    </div>
+                </div>
+                <div id="indicadores-inscritos-pista" class="carrusel-indicadores"></div>
+            </div>
+
+            <!-- SECCIÓN 3: TABLA DETALLADA DE MIS SOLICITUDES Y HISTORIAL -->
             <div class="tarjeta">
-                <h3 class="subtitulo-bloque"><i class="fa-solid fa-calendar-check icono-oro"></i> Mis Solicitudes de Tutoría</h3>
-                <p class="subtitulo-seccion">Estado actual de las citas que has reservado en el sistema.</p>
+                <h3 class="subtitulo-bloque"><i class="fa-solid fa-calendar-check icono-oro"></i> Historial y Detalle de Solicitudes</h3>
+                <p class="subtitulo-seccion">Seguimiento en formato de tabla de todas tus reservas realizadas.</p>
 
                 <div class="contenedor-tabla">
                     <table class="tabla-datos">
