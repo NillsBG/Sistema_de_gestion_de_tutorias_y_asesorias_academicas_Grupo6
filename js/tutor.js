@@ -1,4 +1,4 @@
-// js/tutor.js - Portal Tutor (Cursos asignados + Publicar por días de la semana + Editar/Eliminar + Solicitudes)
+// js/tutor.js - Portal Tutor con Slider Organizado de 4 Tarjetas por Vista
 let idTutorSesion = 0;
 let sliderTutorPosicion = 0;
 let misTutoriasCache = [];
@@ -44,16 +44,12 @@ async function cargarCursosAsignadosTutor() {
     }
 }
 
-/* ===================== DÍAS DE LA SEMANA ===================== */
-// Se llama desde el <select id="disp-dias-semana"> al cambiar la cantidad de días
 function limitarDiasSeleccionados() {
     const max = parseInt(document.getElementById('disp-dias-semana').value) || 1;
     const marcados = Array.from(document.querySelectorAll('.disp-dia:checked'));
-    // Si hay más marcados que el máximo, desmarca los últimos
     marcados.slice(max).forEach(cb => cb.checked = false);
 }
 
-// Se llama desde cada checkbox .disp-dia (onchange="validarDiasSeleccionados(this)")
 function validarDiasSeleccionados(checkbox) {
     const max = parseInt(document.getElementById('disp-dias-semana').value) || 1;
     const marcados = document.querySelectorAll('.disp-dia:checked').length;
@@ -71,8 +67,6 @@ async function guardarDisponibilidad(event) {
     const fecha      = document.getElementById('disp-fecha').value;
     const horaInicio = document.getElementById('disp-inicio').value;
     const duracion   = document.getElementById('disp-duracion').value;
-    const semanasEl  = document.getElementById('disp-semanas');
-    const semanas    = semanasEl ? parseInt(semanasEl.value) || 1 : 1;
     const cantDias   = parseInt(document.getElementById('disp-dias-semana')?.value) || 1;
     const diasSemana = Array.from(document.querySelectorAll('.disp-dia:checked')).map(cb => parseInt(cb.value));
 
@@ -84,10 +78,6 @@ async function guardarDisponibilidad(event) {
         alert('Selecciona al menos un día de la semana.');
         return;
     }
-    if (diasSemana.length !== cantDias) {
-        alert(`Indicaste ${cantDias} día(s) a la semana, pero seleccionaste ${diasSemana.length}. Ajusta tu selección.`);
-        return;
-    }
 
     const resp = await fetch('api/disponibilidad.php', {
         method: 'POST',
@@ -95,11 +85,10 @@ async function guardarDisponibilidad(event) {
         body: JSON.stringify({
             idTutor: idTutorSesion,
             idCurso: idCurso,
-            fecha: fecha,            // fecha de inicio
+            fecha: fecha,
             horaInicio: horaInicio,
             duracionMinutos: duracion,
-            diasSemana: diasSemana,
-            semanas: semanas
+            diasSemana: diasSemana
         })
     });
 
@@ -113,15 +102,17 @@ async function guardarDisponibilidad(event) {
     }
 }
 
-/* ===================== MIS TUTORÍAS (listar) ===================== */
+/* ===================== MIS TUTORÍAS (LISTAR EN SLIDER 4 COLUMNAS) ===================== */
 async function cargarMisTutoriasPublicadas() {
     const pista = document.getElementById('slider-tutor-pista');
+    const contInd = document.getElementById('indicadores-tutor-pista');
     if (!pista) return;
 
     const resp = await fetch(`api/disponibilidad.php?idTutor=${idTutorSesion}`);
     const data = await resp.json();
 
     pista.innerHTML = '';
+    if (contInd) contInd.innerHTML = '';
     sliderTutorPosicion = 0;
     pista.style.transform = 'translateX(0)';
 
@@ -130,20 +121,24 @@ async function cargarMisTutoriasPublicadas() {
         data.datos.forEach(item => {
             const div = document.createElement('div');
             div.className = 'tarjeta-carrusel-item';
-            const nombreDia = NOMBRES_DIAS[new Date(item.fecha + 'T00:00:00').getDay() || 7];
+
+            // Días de la semana
+            const diasTexto = item.diasSemana || NOMBRES_DIAS[new Date(item.fecha + 'T00:00:00').getDay() || 7];
+
             div.innerHTML = `
                 <div class="tarjeta-carrusel-contenido">
                     <div>
                         <span class="etiqueta-materia">${esc(item.nombreMateria)}</span>
-                        <p class="mt-xs"><strong>Fecha:</strong> ${esc(nombreDia)} ${esc(item.fecha)}</p>
-                        <p><strong>Horario:</strong> ${esc(item.horaInicio)} - ${esc(item.horaFin)}</p>
-                        <p><strong>Inscriptos:</strong> ${item.cuposOcupados || 0} / 30 alumnos</p>
+                        <div class="info-detalle-linea"><i class="fa-solid fa-calendar-days"></i> <strong>Días:</strong> ${esc(diasTexto)}</div>
+                        <div class="info-detalle-linea"><i class="fa-regular fa-calendar"></i> <strong>Inicio:</strong> ${esc(item.fecha)}</div>
+                        <div class="info-detalle-linea"><i class="fa-solid fa-clock"></i> <strong>Horario:</strong> ${esc(item.horaInicio.substring(0,5))} - ${esc(item.horaFin.substring(0,5))}</div>
+                        <div class="info-detalle-linea"><i class="fa-solid fa-users"></i> <strong>Inscritos:</strong> ${item.cuposOcupados || 0} / 30 alumnos</div>
                     </div>
-                    <div class="mt-sm acciones-tarjeta">
-                        <button type="button" class="btn btn-exito-suave" onclick="abrirModalEditar(${item.idDisponibilidad})">
+                    <div class="mt-sm acciones-tarjeta" style="display:flex; gap:0.4rem; flex-wrap:wrap;">
+                        <button type="button" class="btn btn-exito-suave" style="flex:1;" onclick="abrirModalEditar(${item.idDisponibilidad})">
                             <i class="fa-solid fa-pen"></i> Editar
                         </button>
-                        <button type="button" class="btn btn-peligro-suave" onclick="eliminarTutoria(${item.idDisponibilidad})">
+                        <button type="button" class="btn btn-peligro-suave" style="flex:1;" onclick="eliminarTutoria(${item.idDisponibilidad})">
                             <i class="fa-solid fa-trash"></i> Eliminar
                         </button>
                     </div>
@@ -151,25 +146,66 @@ async function cargarMisTutoriasPublicadas() {
             `;
             pista.appendChild(div);
         });
+
+        // Generar Indicadores
+        if (contInd) {
+            const porVista = obtenerTarjetasPorVistaTutor();
+            const totalPaginas = Math.ceil(data.datos.length / porVista);
+            for (let i = 0; i < totalPaginas; i++) {
+                const punto = document.createElement('button');
+                punto.className = `punto-indicador ${i === 0 ? 'activo' : ''}`;
+                punto.onclick = () => irASlideTutor(i);
+                contInd.appendChild(punto);
+            }
+        }
     } else {
         misTutoriasCache = [];
         pista.innerHTML = `<p class="subtitulo-seccion p-sm">No tienes tutorías activas actualmente.</p>`;
     }
 }
 
+function obtenerTarjetasPorVistaTutor() {
+    if (window.innerWidth <= 550) return 1;
+    if (window.innerWidth <= 850) return 2;
+    if (window.innerWidth <= 1100) return 3;
+    return 4; // 4 tarjetas por vista en escritorio
+}
+
 function moverSliderTutor(dir) {
     const pista = document.getElementById('slider-tutor-pista');
     if (!pista) return;
 
-    const max = Math.max(0, pista.children.length - 1);
-    sliderTutorPosicion += dir;
-    if (sliderTutorPosicion < 0) sliderTutorPosicion = max;
-    if (sliderTutorPosicion > max) sliderTutorPosicion = 0;
+    const totalItems = pista.children.length;
+    const porVista   = obtenerTarjetasPorVistaTutor();
+    const maxIndice  = Math.max(0, Math.ceil(totalItems / porVista) - 1);
 
-    pista.style.transform = `translateX(calc(-${sliderTutorPosicion * 100}% - ${sliderTutorPosicion}rem))`;
+    sliderTutorPosicion += dir;
+    if (sliderTutorPosicion < 0) sliderTutorPosicion = maxIndice;
+    if (sliderTutorPosicion > maxIndice) sliderTutorPosicion = 0;
+
+    actualizarSliderTutor();
 }
 
-/* ===================== EDITAR ===================== */
+function irASlideTutor(idx) {
+    sliderTutorPosicion = idx;
+    actualizarSliderTutor();
+}
+
+function actualizarSliderTutor() {
+    const pista = document.getElementById('slider-tutor-pista');
+    if (!pista) return;
+
+    const porcentaje = sliderTutorPosicion * 100;
+    pista.style.transform = `translateX(-${porcentaje}%)`;
+
+    const puntos = document.querySelectorAll('#indicadores-tutor-pista .punto-indicador');
+    puntos.forEach((p, idx) => {
+        if (idx === sliderTutorPosicion) p.classList.add('activo');
+        else p.classList.remove('activo');
+    });
+}
+
+/* ===================== EDITAR / ELIMINAR / SOLICITUDES ===================== */
 function abrirModalEditar(idDisp) {
     const item = misTutoriasCache.find(t => parseInt(t.idDisponibilidad) === parseInt(idDisp));
     if (!item) return;
@@ -236,7 +272,6 @@ async function guardarEdicionTutoria(idDisp) {
     }
 }
 
-/* ===================== ELIMINAR ===================== */
 async function eliminarTutoria(idDisp) {
     if (!confirm('¿Seguro que deseas eliminar esta tutoría?')) return;
 
@@ -247,9 +282,9 @@ async function eliminarTutoria(idDisp) {
     });
     let data = await resp.json();
 
-    // Si hay estudiantes inscritos, pedir una segunda confirmación
     if (!data.exito && data.requiereConfirmacion) {
-        if (!confirm(`⚠️ ${data.mensaje}\nSi la eliminas, sus solicitudes también se borrarán. ¿Continuar?`)) return;
+        if (!confirm(`⚠️ ${data.mensaje}
+Si la eliminas, sus solicitudes también se borrarán. ¿Continuar?`)) return;
 
         resp = await fetch('api/disponibilidad.php', {
             method: 'DELETE',
@@ -268,7 +303,6 @@ async function eliminarTutoria(idDisp) {
     }
 }
 
-/* ===================== SOLICITUDES ===================== */
 async function cargarSolicitudesTutor() {
     const resp = await fetch(`api/solicitudes.php?idTutor=${idTutorSesion}`);
     const data = await resp.json();
