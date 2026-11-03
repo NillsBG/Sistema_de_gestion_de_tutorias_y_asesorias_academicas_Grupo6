@@ -1,5 +1,8 @@
 <?php
 // api/disponibilidad.php - CRUD de Horarios: publicar (varios días/semana), modificar y eliminar
+
+// Usar la fecha y hora locales de Guatemala para crear y modificar tutorías.
+date_default_timezone_set('America/Guatemala');
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
@@ -10,6 +13,11 @@ if (file_exists('../conexion.php')) {
 } else {
     require_once 'conexion.php';
 }
+
+
+// Unificar las comparaciones SQL con la hora local de Guatemala.
+// PHP usa America/Guatemala y MySQL debe usar el mismo horario.
+$pdo->exec("SET time_zone = '-06:00'");
 
 function responder($datos, $codigo = 200) {
     http_response_code($codigo);
@@ -59,6 +67,9 @@ if ($metodo === 'GET') {
                 d.fecha,
                 d.horaInicio,
                 d.horaFin,
+                ELT(WEEKDAY(d.fecha) + 1,
+                    'Lunes', 'Martes', 'Miércoles', 'Jueves',
+                    'Viernes', 'Sábado', 'Domingo') AS diasSemana,
                 d.duracionMinutos,
                 d.cupoMaximo,
                 d.estadoDisponibilidad,
@@ -70,7 +81,7 @@ if ($metodo === 'GET') {
             INNER JOIN tblCursos cur ON d.idCurso = cur.idCurso
             INNER JOIN tblCarreras c ON cur.idCarrera = c.idCarrera
             WHERE d.estadoDisponibilidad = 'disponible'
-              AND CONCAT(d.fecha, ' ', d.horaFin) >= NOW()
+              AND TIMESTAMP(d.fecha, d.horaInicio) > NOW()
         ";
 
         $params = [];
