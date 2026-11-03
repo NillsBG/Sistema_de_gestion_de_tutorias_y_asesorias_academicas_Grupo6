@@ -13,6 +13,17 @@ document.addEventListener('DOMContentLoaded', async () => {
     cargarCursosAsignadosTutor();
     cargarMisTutoriasPublicadas();
     cargarSolicitudesTutor();
+
+    // Retirar tutorías y solicitudes que ya comenzaron, sin recargar la página.
+    const actualizarTutorias = () => {
+        if (document.visibilityState === 'hidden') return;
+        cargarMisTutoriasPublicadas();
+        cargarSolicitudesTutor();
+    };
+    setInterval(actualizarTutorias, 15000);
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') actualizarTutorias();
+    });
 });
 
 function esc(texto) {
@@ -108,7 +119,7 @@ async function cargarMisTutoriasPublicadas() {
     const contInd = document.getElementById('indicadores-tutor-pista');
     if (!pista) return;
 
-    const resp = await fetch(`api/disponibilidad.php?idTutor=${idTutorSesion}`);
+    const resp = await fetch(`api/disponibilidad.php?idTutor=${idTutorSesion}`, { cache: 'no-store' });
     const data = await resp.json();
 
     pista.innerHTML = '';
@@ -304,7 +315,7 @@ Si la eliminas, sus solicitudes también se borrarán. ¿Continuar?`)) return;
 }
 
 async function cargarSolicitudesTutor() {
-    const resp = await fetch(`api/solicitudes.php?idTutor=${idTutorSesion}`);
+    const resp = await fetch(`api/solicitudes.php?idTutor=${idTutorSesion}&soloActivas=1`, { cache: 'no-store' });
     const data = await resp.json();
 
     const tabla = document.getElementById('tabla-solicitudes-tutor');

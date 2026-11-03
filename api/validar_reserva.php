@@ -8,6 +8,9 @@ if (file_exists('../conexion.php')) {
     require_once 'conexion.php';
 }
 
+// Comparar fechas usando la hora de Guatemala en MySQL.
+$pdo->exec("SET time_zone = '-06:00'");
+
 $input = json_decode(file_get_contents('php://input'), true) ?? $_POST;
 $noCarnet = trim($input['noCarnetEstudiante'] ?? '');
 $idDisp   = (int)($input['idDisponibilidad'] ?? 0);
@@ -19,12 +22,26 @@ if (empty($noCarnet) || $idDisp <= 0) {
 
 try {
     // 1. Obtener datos del horario solicitado
-    $stmtH = $pdo->prepare("SELECT fecha, horaInicio, horaFin, cupoMaximo FROM tblDisponibilidad WHERE idDisponibilidad = ?");
+    $stmtH = $pdo->prepare("
+        SELECT fecha, horaInicio, horaFin, cupoMaximo,
+               estadoDisponibilidad,
+               (TIMESTAMP(fecha, horaInicio) > NOW()) AS vigente
+        FROM tblDisponibilidad
+        WHERE idDisponibilidad = ?
+    ");
     $stmtH->execute([$idDisp]);
     $horario = $stmtH->fetch();
 
     if (!$horario) {
         echo json_encode(['valido' => false, 'mensaje' => 'El horario de tutoría ya no existe.']);
+        exit;
+    }
+
+    if ($horario['estadoDisponibilidad'] !== 'disponible' || !(int)$horario['vigente']) {
+        echo json_encode([
+            'valido' => false,
+            'mensaje' => 'Esta tutoría ya comenzó o no está disponible para inscribirse.'
+        ], JSON_UNESCAPED_UNICODE);
         exit;
     }
 

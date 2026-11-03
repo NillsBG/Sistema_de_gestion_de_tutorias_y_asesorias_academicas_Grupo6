@@ -7,6 +7,19 @@ document.addEventListener('DOMContentLoaded', () => {
     cargarDisponibilidadEstudiante();
     cargarSolicitudesEstudiante();
     configurarFiltrosEstudiante();
+
+    // Sin necesidad de recargar: revisar vencimientos cada 15 segundos.
+    // La tutoría cierra en la hora de inicio (MySQL: NOW()).
+    const actualizarVigencias = () => {
+        if (document.visibilityState === 'hidden') return;
+        cargarDisponibilidadEstudiante();
+        cargarSolicitudesEstudiante();
+    };
+
+    setInterval(actualizarVigencias, 15000);
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') actualizarVigencias();
+    });
 });
 
 function esc(texto) {
@@ -22,14 +35,13 @@ function formatearHora(horaStr) {
 
 async function cargarDisponibilidadEstudiante() {
     try {
-        const respuesta = await fetch('api/disponibilidad.php');
+        const respuesta = await fetch('api/disponibilidad.php', { cache: 'no-store' });
         const resultado = await respuesta.json();
 
         if (resultado.exito && Array.isArray(resultado.datos)) {
             listaDisponibilidadGlobal = resultado.datos;
             poblarSelectMateriasCarrera(listaDisponibilidadGlobal);
-            carruselPosicionActual = 0;
-            renderizarTarjetasCarrusel(listaDisponibilidadGlobal);
+            aplicarFiltrosDisponibilidadEstudiante();
         }
     } catch (e) {
         console.error('Error al cargar disponibilidad:', e);
@@ -40,11 +52,17 @@ function poblarSelectMateriasCarrera(datos) {
     const select = document.getElementById('filtrar-materia');
     if (!select) return;
 
+    const materiaSeleccionada = select.value;
     const materiasUnicas = [...new Set(datos.map(d => d.nombreMateria))];
     select.innerHTML = '<option value="">Todas las materias de tu carrera</option>';
     materiasUnicas.forEach(m => {
         select.innerHTML += `<option value="${esc(m)}">${esc(m)}</option>`;
     });
+
+    // Mantener el filtro del estudiante durante la actualización automática.
+    if ([...select.options].some(op => op.value === materiaSeleccionada)) {
+        select.value = materiaSeleccionada;
+    }
 }
 
 function renderizarTarjetasCarrusel(datos) {
@@ -85,7 +103,7 @@ function renderizarTarjetasCarrusel(datos) {
             const totalPaginas = Math.ceil(datos.length / obtenerTarjetasPorVistaEstudiante());
             for (let i = 0; i < totalPaginas; i++) {
                 const punto = document.createElement('button');
-                punto.className = `punto-indicador ${i === 0 ? 'activo' : ''}`;
+                punto.className = `punto-indicador ${i === carruselPosicionActual ? 'activo' : ''}`;
                 punto.onclick = () => irASlide(i);
                 contIndicadores.appendChild(punto);
             }
@@ -149,8 +167,12 @@ async function cargarSolicitudesEstudiante() {
         const sesData = await respSes.json();
         const carnet  = sesData.usuario.noCarnetCompleto || sesData.usuario.username;
 
-        // Trae todas las solicitudes del alumno
-        const resp = await fetch(`api/solicitudes.php?noCarnetEstudiante=${encodeURIComponent(carnet)}`);
+        // Solo tutorías cuyo horario NO ha finalizado.
+        // El mismo resultado alimenta las tarjetas y el historial visible.
+        const resp = await fetch(
+            `api/solicitudes.php?noCarnetEstudiante=${encodeURIComponent(carnet)}&soloActivas=1`,
+            { cache: 'no-store' }
+        );
         const data = await resp.json();
 
         const pistaInscritos = document.getElementById('slider-inscritos-pista');
@@ -162,7 +184,7 @@ async function cargarSolicitudesEstudiante() {
         if (tabla) tabla.innerHTML = '';
 
         if (data.exito && Array.isArray(data.datos) && data.datos.length > 0) {
-            // Filtrar inscripciones activas (Aprobada o Pendiente)
+            // En las tarjetas solo mostrar solicitudes Aprobadas o Pendientes (vigentes).
             const solicitudesActivas = data.datos.filter(s => s.estadoSolicitud === 'Aprobada' || s.estadoSolicitud === 'Pendiente');
 
             if (pistaInscritos) {
@@ -204,7 +226,7 @@ async function cargarSolicitudesEstudiante() {
                 }
             }
 
-            // Renderizar la tabla de historial completa abajo
+            // Mostrar solicitudes vigentes en la tabla; las vencidas no se muestran.
             if (tabla) {
                 data.datos.forEach(s => {
                     const tr = document.createElement('tr');
@@ -234,8 +256,8 @@ async function cargarSolicitudesEstudiante() {
                 }
             }
         } else {
-            if (pistaInscritos) pistaInscritos.innerHTML = `<p class="subtitulo-seccion p-sm" style="padding:1rem;">No te has inscrito en ninguna tutoría aún.</p>`;
-            if (tabla) tabla.innerHTML = `<tr><td colspan="5" class="texto-centro">No tienes solicitudes de tutoría registradas.</td></tr>`;
+            if (pistaInscritos) pistaInscritos.innerHTML = `<p class="subtitulo-seccion p-sm" style="padding:1rem;">No tienes tutorías vigentes actualmente.</p>`;
+            if (tabla) tabla.innerHTML = `<tr><td colspan="5" class="texto-centro">No tienes solicitudes de tutoría vigentes.</td></tr>`;
         }
 
         sliderInscritosPosicion = 0;
@@ -333,30 +355,32 @@ async function cancelarSolicitud(idSol) {
     }
 }
 
-function configurarFiltrosEstudiante() {
-    const buscarInput  = document.getElementById('buscar-texto');
+function aplicarFiltrosDisponibilidadEstudiante(reiniciar = false) {
+    const buscarInput = document.getElementById('buscar-texto');
     const selectMateria = document.getElementById('filtrar-materia');
+    const txt = buscarInput ? buscarInput.value.toLowerCase().trim() : '';
+    const mat = selectMateria ? selectMateria.value.toLowerCase().trim() : '';
 
-    function filtrar() {
-        const txt = buscarInput ? buscarInput.value.toLowerCase().trim() : '';
-        const mat = selectMateria ? selectMateria.value.toLowerCase().trim() : '';
+    const filtrados = listaDisponibilidadGlobal.filter(item => {
+        const nomMat = (item.nombreMateria || '').toLowerCase();
+        const nomTut = (item.nombreTutor || '').toLowerCase();
 
-        const filtrados = listaDisponibilidadGlobal.filter(item => {
-            const nomMat = (item.nombreMateria || '').toLowerCase();
-            const nomTut = (item.nombreTutor || '').toLowerCase();
+        const coincideTxt = !txt || nomMat.includes(txt) || nomTut.includes(txt);
+        const coincideMat = !mat || nomMat === mat;
+        return coincideTxt && coincideMat;
+    });
 
-            const coincideTxt = !txt || nomMat.includes(txt) || nomTut.includes(txt);
-            const coincideMat = !mat || nomMat === mat;
+    const porVista = obtenerTarjetasPorVistaEstudiante();
+    const indiceMaximo = Math.max(0, Math.ceil(filtrados.length / porVista) - 1);
+    carruselPosicionActual = reiniciar ? 0 : Math.min(carruselPosicionActual, indiceMaximo);
+    renderizarTarjetasCarrusel(filtrados);
+}
 
-            return coincideTxt && coincideMat;
-        });
-
-        carruselPosicionActual = 0;
-        renderizarTarjetasCarrusel(filtrados);
-    }
-
-    if (buscarInput) buscarInput.addEventListener('input', filtrar);
-    if (selectMateria) selectMateria.addEventListener('change', filtrar);
+function configurarFiltrosEstudiante() {
+    const buscarInput = document.getElementById('buscar-texto');
+    const selectMateria = document.getElementById('filtrar-materia');
+    if (buscarInput) buscarInput.addEventListener('input', () => aplicarFiltrosDisponibilidadEstudiante(true));
+    if (selectMateria) selectMateria.addEventListener('change', () => aplicarFiltrosDisponibilidadEstudiante(true));
 }
 
 async function cerrarSesion() {

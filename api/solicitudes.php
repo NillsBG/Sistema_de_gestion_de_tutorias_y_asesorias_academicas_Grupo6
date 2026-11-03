@@ -8,6 +8,9 @@ if (file_exists('../conexion.php')) {
     require_once 'conexion.php';
 }
 
+// Comparar fechas usando la hora de Guatemala en MySQL.
+$pdo->exec("SET time_zone = '-06:00'");
+
 $metodo = $_SERVER['REQUEST_METHOD'];
 
 if ($metodo === 'GET') {
@@ -28,7 +31,9 @@ if ($metodo === 'GET') {
                 d.horaInicio,
                 d.horaFin,
                 d.duracionMinutos,
-                d.diasSemana,
+                ELT(WEEKDAY(d.fecha) + 1,
+                    'Lunes', 'Martes', 'Miércoles', 'Jueves',
+                    'Viernes', 'Sábado', 'Domingo') AS diasSemana,
                 d.cupoMaximo,
                 (SELECT COUNT(*) FROM tblSolicitudes s2 WHERE s2.idDisponibilidad = d.idDisponibilidad AND s2.estadoSolicitud IN ('Pendiente', 'Aprobada')) AS cuposOcupados,
                 t.nombreTutor,
@@ -52,7 +57,8 @@ if ($metodo === 'GET') {
         }
 
         if ($soloActivas === 1) {
-            $sql .= " AND CONCAT(d.fecha, ' ', d.horaFin) >= NOW()";
+            // La tutoría deja de recibir solicitudes al comenzar.
+            $sql .= " AND TIMESTAMP(d.fecha, d.horaInicio) > NOW()";
         }
 
         $sql .= " ORDER BY s.idSolicitud DESC";
@@ -78,8 +84,26 @@ if ($metodo === 'GET') {
             exit;
         }
 
-        $stmt = $pdo->prepare("INSERT INTO tblSolicitudes (noCarnetEstudiante, idDisponibilidad, estadoSolicitud) VALUES (?, ?, 'Pendiente')");
+        // Evitar que se guarden nuevas solicitudes para horarios ya vencidos.
+        // La validación se hace también aquí, pues validar_reserva.php se puede omitir.
+        $stmt = $pdo->prepare("
+            INSERT INTO tblSolicitudes (noCarnetEstudiante, idDisponibilidad, estadoSolicitud)
+            SELECT ?, d.idDisponibilidad, 'Pendiente'
+            FROM tblDisponibilidad d
+            WHERE d.idDisponibilidad = ?
+              AND d.estadoDisponibilidad = 'disponible'
+              AND TIMESTAMP(d.fecha, d.horaInicio) > NOW()
+        ");
         $stmt->execute([$noCarnet, $idDisp]);
+
+        if ($stmt->rowCount() === 0) {
+            http_response_code(409);
+            echo json_encode([
+                'exito' => false,
+                'mensaje' => 'La tutoría ya comenzó o no está disponible para nuevas solicitudes.'
+            ], JSON_UNESCAPED_UNICODE);
+            exit;
+        }
 
         echo json_encode(['exito' => true, 'mensaje' => 'Solicitud enviada correctamente.'], JSON_UNESCAPED_UNICODE);
     } catch (Exception $e) {
