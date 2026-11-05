@@ -1,4 +1,4 @@
-// js/tutor.js - Portal Tutor con Slider Organizado de 4 Tarjetas por Vista
+// js/tutor.js - Portal Tutor completo con Autollenado Dinámico de Fechas
 let idTutorSesion = 0;
 let sliderTutorPosicion = 0;
 let misTutoriasCache = [];
@@ -6,15 +6,25 @@ let misTutoriasCache = [];
 const NOMBRES_DIAS = { 1: 'Lunes', 2: 'Martes', 3: 'Miércoles', 4: 'Jueves', 5: 'Viernes', 6: 'Sábado', 7: 'Domingo' };
 
 document.addEventListener('DOMContentLoaded', async () => {
+    // 1. Obtener la sesión activa del tutor
     const respSes = await fetch('php/session_check.php');
     const sesData = await respSes.json();
     idTutorSesion = sesData.usuario.idTutor;
 
+    // 2. Cargar listas iniciales
     cargarCursosAsignadosTutor();
     cargarMisTutoriasPublicadas();
     cargarSolicitudesTutor();
 
-    // Retirar tutorías y solicitudes que ya comenzaron, sin recargar la página.
+    // 3. Vincular evento 'change' a los checkboxes de días para calcular fechas
+    document.querySelectorAll('.disp-dia').forEach(cb => {
+        cb.addEventListener('change', recalcularFechasAuto);
+    });
+
+    // Ejecutar recálculo inicial
+    recalcularFechasAuto();
+
+    // 4. Actualización automática cada 15 segundos
     const actualizarTutorias = () => {
         if (document.visibilityState === 'hidden') return;
         cargarMisTutoriasPublicadas();
@@ -32,12 +42,74 @@ function esc(texto) {
     return d.innerHTML;
 }
 
+/* ===================== AUTOLÓGICA DE FECHAS (CHECKBOXES) ===================== */
+function recalcularFechasAuto() {
+    const checkboxes = Array.from(document.querySelectorAll('.disp-dia:checked'));
+    const inputInicio = document.getElementById('disp-fecha-inicio');
+    const inputFin = document.getElementById('disp-fecha-fin');
+    const contFin = document.getElementById('contenedor-fecha-fin');
+    const inputTotal = document.getElementById('disp-total-dias');
+
+    if (!inputInicio || !inputTotal) return;
+
+    if (checkboxes.length === 0) {
+        inputInicio.value = '';
+        if (inputFin) inputFin.value = '';
+        if (contFin) contFin.style.display = 'none';
+        inputTotal.value = '0 días seleccionados';
+        return;
+    }
+
+    const diasSeleccionados = checkboxes.map(cb => parseInt(cb.value)).sort((a, b) => a - b);
+    const hoy = new Date();
+
+    let fechaInicio = null;
+    for (let i = 0; i < 7; i++) {
+        let temp = new Date();
+        temp.setDate(hoy.getDate() + i);
+        let diaISO = temp.getDay() === 0 ? 7 : temp.getDay();
+        if (diasSeleccionados.includes(diaISO)) {
+            fechaInicio = temp;
+            break;
+        }
+    }
+
+    if (!fechaInicio) fechaInicio = hoy;
+
+    const formatFecha = (d) => {
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
+
+    inputInicio.value = formatFecha(fechaInicio);
+
+    if (diasSeleccionados.length === 1) {
+        if (inputFin) inputFin.value = '';
+        if (contFin) contFin.style.display = 'none';
+        inputTotal.value = '1 día seleccionado';
+    } else {
+        let primerDiaISO = fechaInicio.getDay() === 0 ? 7 : fechaInicio.getDay();
+        let ultimoDiaISO = diasSeleccionados[diasSeleccionados.length - 1];
+
+        let diffDias = (ultimoDiaISO - primerDiaISO + 7) % 7;
+        let fechaFin = new Date(fechaInicio);
+        fechaFin.setDate(fechaInicio.getDate() + diffDias);
+
+        if (inputFin) inputFin.value = formatFecha(fechaFin);
+        if (contFin) contFin.style.display = 'block';
+        inputTotal.value = `${diasSeleccionados.length} días seleccionados`;
+    }
+}
+
 /* ===================== CURSOS ASIGNADOS ===================== */
 async function cargarCursosAsignadosTutor() {
     const select = document.getElementById('disp-curso');
     if (!select) return;
 
-    const resp = await fetch('api/admin_asignaciones.php');
+    const urlApi = window.location.pathname.includes('/vistas/') ? '../api/admin_asignaciones.php' : 'api/admin_asignaciones.php';
+    const resp = await fetch(urlApi);
     const data = await resp.json();
 
     select.innerHTML = '<option value="">Selecciona un curso de tu lista autorizada...</option>';
@@ -55,71 +127,92 @@ async function cargarCursosAsignadosTutor() {
     }
 }
 
-function limitarDiasSeleccionados() {
-    const max = parseInt(document.getElementById('disp-dias-semana').value) || 1;
-    const marcados = Array.from(document.querySelectorAll('.disp-dia:checked'));
-    marcados.slice(max).forEach(cb => cb.checked = false);
-}
-
-function validarDiasSeleccionados(checkbox) {
-    const max = parseInt(document.getElementById('disp-dias-semana').value) || 1;
-    const marcados = document.querySelectorAll('.disp-dia:checked').length;
-    if (marcados > max) {
-        checkbox.checked = false;
-        alert(`Elegiste impartir ${max} día(s) a la semana. Cambia la cantidad si necesitas más días.`);
-    }
-}
-
-/* ===================== PUBLICAR ===================== */
+/* ===================== PUBLICAR TUTORÍA ===================== */
 async function guardarDisponibilidad(event) {
     if (event) event.preventDefault();
 
-    const idCurso    = document.getElementById('disp-curso').value;
-    const fecha      = document.getElementById('disp-fecha').value;
-    const horaInicio = document.getElementById('disp-inicio').value;
-    const duracion   = document.getElementById('disp-duracion').value;
-    const cantDias   = parseInt(document.getElementById('disp-dias-semana')?.value) || 1;
-    const diasSemana = Array.from(document.querySelectorAll('.disp-dia:checked')).map(cb => parseInt(cb.value));
+    const selectCurso   = document.getElementById('disp-curso');
+    const inputInicio   = document.getElementById('disp-fecha-inicio');
+    const inputFin      = document.getElementById('disp-fecha-fin');
+    const inputHora     = document.getElementById('disp-inicio');
+    const selectDur     = document.getElementById('disp-duracion');
 
-    if (!idCurso || !fecha || !horaInicio) {
-        alert('Por favor completa todos los campos.');
+    const idCurso     = selectCurso ? selectCurso.value : '';
+    const fechaInicio = inputInicio ? inputInicio.value : '';
+    const fechaFin    = (inputFin && inputFin.value) ? inputFin.value : fechaInicio;
+    const horaInicio  = inputHora ? inputHora.value : '';
+    const duracion    = selectDur ? selectDur.value : '45';
+    const diasSemana  = Array.from(document.querySelectorAll('.disp-dia:checked')).map(cb => parseInt(cb.value));
+
+    if (!idCurso) {
+        alert('Por favor selecciona un curso asignado.');
         return;
     }
     if (diasSemana.length === 0) {
-        alert('Selecciona al menos un día de la semana.');
+        alert('Debes seleccionar al menos un día a impartir la tutoría.');
+        return;
+    }
+    if (!fechaInicio) {
+        alert('Falta la Fecha de Inicio.');
+        return;
+    }
+    if (!horaInicio) {
+        alert('Por favor ingresa la Hora Inicio.');
         return;
     }
 
-    const resp = await fetch('api/disponibilidad.php', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            idTutor: idTutorSesion,
-            idCurso: idCurso,
-            fecha: fecha,
-            horaInicio: horaInicio,
-            duracionMinutos: duracion,
-            diasSemana: diasSemana
-        })
-    });
+    try {
+        const urlApi = window.location.pathname.includes('/vistas/') ? '../api/disponibilidad.php' : 'api/disponibilidad.php';
 
-    const data = await resp.json();
-    if (data.exito) {
-        alert('✅ ' + data.mensaje);
-        document.getElementById('form-disponibilidad').reset();
-        cargarMisTutoriasPublicadas();
-    } else {
-        alert('❌ ' + data.mensaje);
+        const resp = await fetch(urlApi, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                idTutor: idTutorSesion,
+                idCurso: parseInt(idCurso),
+                fecha: fechaInicio,
+                fechaFin: fechaFin,
+                horaInicio: horaInicio,
+                duracionMinutos: parseInt(duracion),
+                diasSemana: diasSemana
+            })
+        });
+
+        const textResponse = await resp.text();
+        let data;
+        try {
+            data = JSON.parse(textResponse);
+        } catch (e) {
+            console.error('Respuesta no JSON del servidor:', textResponse);
+            alert('❌ El servidor devolvió una respuesta no válida.');
+            return;
+        }
+
+        if (data.exito) {
+            alert('✅ ' + data.mensaje);
+            document.getElementById('form-disponibilidad').reset();
+            recalcularFechasAuto();
+            cargarMisTutoriasPublicadas();
+        } else {
+            alert('❌ ' + data.mensaje);
+        }
+    } catch (error) {
+        console.error('Error detallado de conexión:', error);
+        alert('❌ Error de conexión al guardar la tutoría.');
     }
 }
 
-/* ===================== MIS TUTORÍAS (LISTAR EN SLIDER 4 COLUMNAS) ===================== */
+/* ===================== MIS TUTORÍAS (SLIDER 4 COLUMNAS) ===================== */
 async function cargarMisTutoriasPublicadas() {
     const pista = document.getElementById('slider-tutor-pista');
     const contInd = document.getElementById('indicadores-tutor-pista');
     if (!pista) return;
 
-    const resp = await fetch(`api/disponibilidad.php?idTutor=${idTutorSesion}`, { cache: 'no-store' });
+    const urlApi = window.location.pathname.includes('/vistas/') 
+        ? `../api/disponibilidad.php?idTutor=${idTutorSesion}` 
+        : `api/disponibilidad.php?idTutor=${idTutorSesion}`;
+
+    const resp = await fetch(urlApi, { cache: 'no-store' });
     const data = await resp.json();
 
     pista.innerHTML = '';
@@ -133,7 +226,6 @@ async function cargarMisTutoriasPublicadas() {
             const div = document.createElement('div');
             div.className = 'tarjeta-carrusel-item';
 
-            // Días de la semana
             const diasTexto = item.diasSemana || NOMBRES_DIAS[new Date(item.fecha + 'T00:00:00').getDay() || 7];
 
             div.innerHTML = `
@@ -158,7 +250,6 @@ async function cargarMisTutoriasPublicadas() {
             pista.appendChild(div);
         });
 
-        // Generar Indicadores
         if (contInd) {
             const porVista = obtenerTarjetasPorVistaTutor();
             const totalPaginas = Math.ceil(data.datos.length / porVista);
@@ -179,7 +270,7 @@ function obtenerTarjetasPorVistaTutor() {
     if (window.innerWidth <= 550) return 1;
     if (window.innerWidth <= 850) return 2;
     if (window.innerWidth <= 1100) return 3;
-    return 4; // 4 tarjetas por vista en escritorio
+    return 4;
 }
 
 function moverSliderTutor(dir) {
@@ -266,7 +357,8 @@ async function guardarEdicionTutoria(idDisp) {
         return;
     }
 
-    const resp = await fetch('api/disponibilidad.php', {
+    const urlApi = window.location.pathname.includes('/vistas/') ? '../api/disponibilidad.php' : 'api/disponibilidad.php';
+    const resp = await fetch(urlApi, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ idDisponibilidad: idDisp, fecha, horaInicio, duracionMinutos: duracion })
@@ -286,7 +378,8 @@ async function guardarEdicionTutoria(idDisp) {
 async function eliminarTutoria(idDisp) {
     if (!confirm('¿Seguro que deseas eliminar esta tutoría?')) return;
 
-    let resp = await fetch('api/disponibilidad.php', {
+    const urlApi = window.location.pathname.includes('/vistas/') ? '../api/disponibilidad.php' : 'api/disponibilidad.php';
+    let resp = await fetch(urlApi, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ idDisponibilidad: idDisp })
@@ -294,10 +387,9 @@ async function eliminarTutoria(idDisp) {
     let data = await resp.json();
 
     if (!data.exito && data.requiereConfirmacion) {
-        if (!confirm(`⚠️ ${data.mensaje}
-Si la eliminas, sus solicitudes también se borrarán. ¿Continuar?`)) return;
+        if (!confirm(`⚠️ ${data.mensaje}\nSi la eliminas, sus solicitudes también se borrarán. ¿Continuar?`)) return;
 
-        resp = await fetch('api/disponibilidad.php', {
+        resp = await fetch(urlApi, {
             method: 'DELETE',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ idDisponibilidad: idDisp, forzar: true })
@@ -315,7 +407,11 @@ Si la eliminas, sus solicitudes también se borrarán. ¿Continuar?`)) return;
 }
 
 async function cargarSolicitudesTutor() {
-    const resp = await fetch(`api/solicitudes.php?idTutor=${idTutorSesion}&soloActivas=1`, { cache: 'no-store' });
+    const urlApi = window.location.pathname.includes('/vistas/') 
+        ? `../api/solicitudes.php?idTutor=${idTutorSesion}&soloActivas=1` 
+        : `api/solicitudes.php?idTutor=${idTutorSesion}&soloActivas=1`;
+
+    const resp = await fetch(urlApi, { cache: 'no-store' });
     const data = await resp.json();
 
     const tabla = document.getElementById('tabla-solicitudes-tutor');
@@ -346,7 +442,8 @@ async function cargarSolicitudesTutor() {
 async function cambiarEstado(idSol, estado) {
     if (!confirm(`¿Estás seguro de cambiar el estado a '${estado}'?`)) return;
 
-    const resp = await fetch('api/solicitudes.php', {
+    const urlApi = window.location.pathname.includes('/vistas/') ? '../api/solicitudes.php' : 'api/solicitudes.php';
+    const resp = await fetch(urlApi, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ idSolicitud: idSol, estadoSolicitud: estado })
@@ -360,6 +457,7 @@ async function cambiarEstado(idSol, estado) {
 }
 
 async function cerrarSesion() {
-    await fetch('php/logout.php');
+    const urlApi = window.location.pathname.includes('/vistas/') ? '../php/logout.php' : 'php/logout.php';
+    await fetch(urlApi);
     window.location.reload();
 }

@@ -106,32 +106,23 @@ if ($metodo === 'GET') {
         responder(['exito' => false, 'mensaje' => 'Error al obtener disponibilidades: ' . $e->getMessage()], 500);
     }
 
-} elseif ($metodo === 'POST') {
+} 
+
+ elseif ($metodo === 'POST') {
     try {
         $input = json_decode(file_get_contents('php://input'), true) ?? $_POST;
 
-        // El tutor siempre publica a su propio nombre (no se confía en el idTutor del cliente)
         $idTutor    = $esAdmin ? (int)($input['idTutor'] ?? 0) : $idTutorSesion;
         $idCurso    = (int)($input['idCurso'] ?? 0);
-        $fecha      = trim($input['fecha'] ?? '');          // fecha de inicio
+        $fecha      = trim($input['fecha'] ?? '');          // Fecha de inicio
+        $fechaFin   = trim($input['fechaFin'] ?? '');       // Fecha de finalización
         $horaInicio = trim($input['horaInicio'] ?? '');
         $duracion   = (int)($input['duracionMinutos'] ?? 45);
-        $semanas    = max(1, min(16, (int)($input['semanas'] ?? 1)));
         $diasSemana = array_values(array_unique(array_map('intval', (array)($input['diasSemana'] ?? []))));
-        $diasSemana = array_filter($diasSemana, fn($d) => $d >= 1 && $d <= 7); // 1=Lunes ... 7=Domingo
+        $diasSemana = array_filter($diasSemana, fn($d) => $d >= 1 && $d <= 7);
 
         if ($idTutor <= 0 || $idCurso <= 0 || empty($fecha) || empty($horaInicio)) {
             responder(['exito' => false, 'mensaje' => 'Todos los campos son obligatorios.'], 400);
-        }
-        if ($duracion < 15 || $duracion > 240) {
-            responder(['exito' => false, 'mensaje' => 'La duración debe estar entre 15 y 240 minutos.'], 400);
-        }
-
-        // El curso debe estar autorizado por el administrador para este tutor
-        $stmtA = $pdo->prepare("SELECT COUNT(*) FROM tblTutorCursos WHERE idTutor = ? AND idCurso = ?");
-        $stmtA->execute([$idTutor, $idCurso]);
-        if ((int)$stmtA->fetchColumn() === 0) {
-            responder(['exito' => false, 'mensaje' => 'Ese curso no está asignado a este tutor.'], 403);
         }
 
         $stmtC = $pdo->prepare("SELECT nombreCurso FROM tblCursos WHERE idCurso = ?");
@@ -142,62 +133,40 @@ if ($metodo === 'GET') {
         }
         $nombreMateria = $cursoObj['nombreCurso'];
 
-        // Construir la lista de fechas
-        $fechas = [];
-        if (empty($diasSemana)) {
-            $fechas[] = $fecha; // compatibilidad: una sola fecha
-        } else {
-            $inicio = new DateTime($fecha);
-            for ($i = 0; $i < $semanas * 7; $i++) {
-                $d = (clone $inicio)->modify("+$i days");
-                if (in_array((int)$d->format('N'), $diasSemana)) {
-                    $fechas[] = $d->format('Y-m-d');
-                }
-            }
+        // Calcular horaFin
+        $horas = calcularHoras($fecha, $horaInicio, $duracion);
+        if (!$horas) {
+            responder(['exito' => false, 'mensaje' => 'La hora de inicio o la duración no son válidas.'], 400);
         }
 
+        // Validar cruces de tutoría en esa fecha/hora
+        if (hayCruceTutor($pdo, $idTutor, $fecha, $horas[0], $horas[1])) {
+            responder(['exito' => false, 'mensaje' => 'Ya tienes una tutoría programada que se cruza con este horario.'], 400);
+        }
+
+        // INSERTAR UNA SOLA TUTORÍA (1 SOLO REGISTRO)
         $stmtIns = $pdo->prepare("
             INSERT INTO tblDisponibilidad (idTutor, idCurso, nombreMateria, fecha, horaInicio, horaFin, duracionMinutos, cupoMaximo, estadoDisponibilidad)
             VALUES (:idTutor, :idCurso, :materia, :fecha, :hInicio, :hFin, :duracion, 30, 'disponible')
         ");
 
-        $creadas = 0;
-        $omitidas = 0;
-        $ahora = time();
+        $stmtIns->execute([
+            ':idTutor'  => $idTutor,
+            ':idCurso'  => $idCurso,
+            ':materia'  => $nombreMateria,
+            ':fecha'    => $fecha,
+            ':hInicio'  => $horas[0],
+            ':hFin'     => $horas[1],
+            ':duracion' => $duracion
+        ]);
 
-        $pdo->beginTransaction();
-        foreach ($fechas as $f) {
-            $horas = calcularHoras($f, $horaInicio, $duracion);
-            if (!$horas || strtotime("$f {$horas[0]}") < $ahora || hayCruceTutor($pdo, $idTutor, $f, $horas[0], $horas[1])) {
-                $omitidas++;
-                continue;
-            }
-            $stmtIns->execute([
-                ':idTutor'  => $idTutor,
-                ':idCurso'  => $idCurso,
-                ':materia'  => $nombreMateria,
-                ':fecha'    => $f,
-                ':hInicio'  => $horas[0],
-                ':hFin'     => $horas[1],
-                ':duracion' => $duracion
-            ]);
-            $creadas++;
-        }
-        $pdo->commit();
-
-        if ($creadas === 0) {
-            responder(['exito' => false, 'mensaje' => 'No se creó ninguna tutoría: las fechas ya pasaron o se cruzan con otras tuyas.'], 400);
-        }
-
-        $msg = "Se publicaron $creadas tutoría(s) exitosamente.";
-        if ($omitidas > 0) $msg .= " Se omitieron $omitidas por fecha pasada o cruce de horario.";
-        responder(['exito' => true, 'mensaje' => $msg, 'creadas' => $creadas, 'omitidas' => $omitidas]);
+        responder(['exito' => true, 'mensaje' => 'Se publicó el espacio de tutoría exitosamente.']);
     } catch (Exception $e) {
-        if ($pdo->inTransaction()) $pdo->rollBack();
         responder(['exito' => false, 'mensaje' => 'Error al guardar disponibilidad: ' . $e->getMessage()], 500);
     }
+}
 
-} elseif ($metodo === 'PUT') {
+elseif ($metodo === 'PUT') {
     // MODIFICAR una tutoría publicada (fecha, hora de inicio y duración)
     try {
         $input      = json_decode(file_get_contents('php://input'), true) ?? [];
