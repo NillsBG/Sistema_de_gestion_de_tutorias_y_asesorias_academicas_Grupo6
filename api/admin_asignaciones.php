@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/../php/auth_middleware.php';
+verificarRol(['Administrador', 'Tutor']);
 // api/admin_asignaciones.php - Endpoint de Administrador para Asignar Cursos a Tutores
 header('Content-Type: application/json; charset=utf-8');
 
@@ -13,6 +15,10 @@ $metodo = $_SERVER['REQUEST_METHOD'];
 if ($metodo === 'GET') {
     try {
         $accion = trim($_GET['accion'] ?? 'listar_asignaciones');
+        // El tutor solo consulta los cursos que le han asignado.
+        if (rolActual() === 'tutor' && $accion !== 'listar_asignaciones') {
+            errorAcceso(403, 'Consulta exclusiva de administradores.');
+        }
 
         if ($accion === 'tutores') {
             $stmt = $pdo->query("SELECT idTutor, nombreTutor, tituloProfesional, especialidad FROM tblTutores ORDER BY nombreTutor ASC");
@@ -44,7 +50,7 @@ if ($metodo === 'GET') {
         }
 
         // Listar asignaciones activas
-        $stmt = $pdo->query("
+        $stmt = $pdo->prepare("
             SELECT 
                 tc.idTutor,
                 tc.idCurso,
@@ -57,14 +63,17 @@ if ($metodo === 'GET') {
             INNER JOIN tblTutores t ON tc.idTutor = t.idTutor
             INNER JOIN tblCursos c ON tc.idCurso = c.idCurso
             INNER JOIN tblCarreras car ON c.idCarrera = car.idCarrera
+            " . (rolActual() === 'tutor' ? " WHERE tc.idTutor = ? " : "") . "
             ORDER BY t.nombreTutor ASC, c.nombreCurso ASC
         ");
+        $stmt->execute(rolActual() === 'tutor' ? [tutorSesion()] : []);
         echo json_encode(['exito' => true, 'datos' => $stmt->fetchAll()]);
 
     } catch (Exception $e) {
         echo json_encode(['exito' => false, 'mensaje' => $e->getMessage()]);
     }
 } elseif ($metodo === 'POST') {
+    verificarRol(['Administrador']);
     try {
         $input   = json_decode(file_get_contents('php://input'), true);
         $idTutor = (int)($input['idTutor'] ?? 0);
@@ -83,6 +92,7 @@ if ($metodo === 'GET') {
         echo json_encode(['exito' => false, 'mensaje' => 'Error al asignar curso: ' . $e->getMessage()]);
     }
 } elseif ($metodo === 'DELETE') {
+    verificarRol(['Administrador']);
     try {
         $input   = json_decode(file_get_contents('php://input'), true);
         $idTutor = (int)($input['idTutor'] ?? 0);
@@ -95,5 +105,8 @@ if ($metodo === 'GET') {
     } catch (Exception $e) {
         echo json_encode(['exito' => false, 'mensaje' => 'Error al eliminar asignación: ' . $e->getMessage()]);
     }
+} else {
+    http_response_code(405);
+    echo json_encode(['exito' => false, 'mensaje' => 'Método no permitido.']);
 }
 ?>
