@@ -234,3 +234,7 @@ CREATE TABLE tblSolicitudes (
 
 INSERT INTO tblSolicitudes (noCarnetEstudiante, idDisponibilidad, estadoSolicitud) VALUES
 ('0901-23-11238', 1, 'Pendiente');
+
+ALTER TABLE tblDisponibilidad 
+ADD COLUMN fechaFin DATE NULL AFTER fecha,
+ADD COLUMN diasSeleccionados VARCHAR(100) NULL AFTER fechaFin;

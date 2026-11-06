@@ -86,8 +86,9 @@ function renderizarTarjetasCarrusel(datos) {
                         <h4 class="nombre-tutor" style="font-size:1.05rem; font-weight:700; margin-bottom:0.4rem;">
                             <i class="fa-solid fa-chalkboard-user"></i> ${esc(item.nombreTutor)}
                         </h4>
-                        <div class="info-detalle-linea"><i class="fa-solid fa-calendar-days"></i> <strong>Días:</strong> ${esc(item.diasSemana || 'Lunes')}</div>
+                        <div class="info-detalle-linea"><i class="fa-solid fa-calendar-days"></i> <strong>Días:</strong> ${esc(item.diasSeleccionados || item.diasSemana || '')}</div>
                         <div class="info-detalle-linea"><i class="fa-regular fa-calendar"></i> <strong>Inicio:</strong> ${esc(item.fecha)}</div>
+                        <div class="info-detalle-linea"><i class="fa-regular fa-calendar-check"></i> <strong>Finalización:</strong> ${esc(item.fechaFin || item.fecha)}</div>
                         <div class="info-detalle-linea"><i class="fa-solid fa-clock"></i> <strong>Horario:</strong> ${formatearHora(item.horaInicio)} - ${formatearHora(item.horaFin)}</div>
                         <div class="info-detalle-linea"><i class="fa-solid fa-users"></i> <strong>Cupos:</strong> ${cuposLibres} / 30 disponibles</div>
                     </div>
@@ -209,7 +210,8 @@ async function cargarSolicitudesEstudiante() {
                                         <i class="fa-solid fa-chalkboard-user"></i> ${esc(s.nombreTutor || 'Tutor UMG')}
                                     </h4>
                                     <div class="info-detalle-linea"><i class="fa-solid fa-calendar-days"></i> <strong>Días:</strong> ${esc(s.diasSemana || 'Lunes')}</div>
-                                    <div class="info-detalle-linea"><i class="fa-regular fa-calendar"></i> <strong>Fecha:</strong> ${esc(s.fecha)}</div>
+                                    <div class="info-detalle-linea"><i class="fa-regular fa-calendar"></i> <strong>Inicio:</strong> ${esc(s.fecha)}</div>
+                                    <div class="info-detalle-linea"><i class="fa-regular fa-calendar-check"></i> <strong>Finalización:</strong> ${esc(s.fechaFin || s.fecha)}</div>
                                     <div class="info-detalle-linea"><i class="fa-solid fa-clock"></i> <strong>Horario:</strong> ${formatearHora(s.horaInicio)} - ${formatearHora(s.horaFin)}</div>
                                     <div class="info-detalle-linea"><i class="fa-solid fa-users"></i> <strong>Inscritos:</strong> ${parseInt(s.cuposOcupados) || 1} / 30 alumnos</div>
                                     <div style="margin-top:0.5rem;">
