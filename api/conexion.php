@@ -3,8 +3,9 @@
 $host = '127.0.0.1';
 $db   = 'tutoria_umg';
 $user = 'root';
-$pass = '1234';
+$pass = '';
 $charset = 'utf8mb4';
+$port = '3307';
 
 $options = [
     PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
@@ -13,7 +14,11 @@ $options = [
 ];
 
 try {
-    $pdo = new PDO("mysql:host=$host;dbname=$db;charset=$charset", $user, $pass, $options);
+    $pdo = new PDO(
+    "mysql:host=$host;port=$port;dbname=$db;charset=$charset",
+    $user,
+    $pass,
+    $options);
 } catch (PDOException $e) {
     http_response_code(500);
     echo json_encode(['exito' => false, 'mensaje' => 'Error de conexión a la base de datos: ' . $e->getMessage()]);
