@@ -1,6 +1,6 @@
 <?php
 // index.php - Enrutador Principal Basado en Roles (Server-Side Architecture)
-session_start();
+require_once __DIR__ . '/php/auth_middleware.php';
 
 $rol = strtolower($_SESSION['rol'] ?? '');
 

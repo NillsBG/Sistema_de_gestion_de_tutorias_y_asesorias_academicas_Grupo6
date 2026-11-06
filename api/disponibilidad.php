@@ -8,6 +8,8 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 header('Content-Type: application/json; charset=utf-8');
 
+require_once __DIR__ . '/../php/auth_middleware.php';
+verificarRol(['Administrador', 'Tutor', 'Estudiante']);
 require_once __DIR__ . '/conexion.php';
 
 $pdo->exec("SET time_zone = '-06:00'");
@@ -141,7 +143,7 @@ function hayCruceTutor($pdo, $idTutor, $fecha, $fechaFin, $dias, $hInicio, $hFin
     return false;
 }
 
-$rolSesion = strtolower($_SESSION['rol'] ?? '');
+$rolSesion = rolActual();
 $idTutorSesion = (int)($_SESSION['idTutor'] ?? 0);
 $esAdmin = in_array($rolSesion, ['administrador', 'admin'], true);
 $metodo = $_SERVER['REQUEST_METHOD'];
@@ -150,6 +152,7 @@ if ($metodo === 'GET') {
     try {
         $codigoCarrera = trim($_GET['codigoCarrera'] ?? '');
         $idTutor = (int)($_GET['idTutor'] ?? 0);
+        if ($rolSesion === 'tutor') $idTutor = tutorSesion();
 
         $sql = "
             SELECT DISTINCT
@@ -212,11 +215,12 @@ if ($metodo === 'GET') {
 }
 
 if ($metodo === 'POST' || $metodo === 'PUT') {
+    verificarRol(['Administrador', 'Tutor']);
     try {
         $input = json_decode(file_get_contents('php://input'), true) ?? $_POST;
         $esEditar = ($metodo === 'PUT');
         $idDisp = (int)($input['idDisponibilidad'] ?? 0);
-        $idTutor = $esAdmin ? (int)($input['idTutor'] ?? 0) : $idTutorSesion;
+        $idTutor = $esAdmin ? (int)($input['idTutor'] ?? 0) : tutorSesion();
         $idCurso = (int)($input['idCurso'] ?? 0);
         $fecha = trim($input['fecha'] ?? '');
         $fechaFin = trim($input['fechaFin'] ?? $fecha);
@@ -229,7 +233,7 @@ if ($metodo === 'POST' || $metodo === 'PUT') {
             $consulta->execute([$idDisp]);
             $actual = $consulta->fetch(PDO::FETCH_ASSOC);
             if (!$actual) responder(['exito' => false, 'mensaje' => 'La tutoría no existe.'], 404);
-            if (!$esAdmin && (int)$actual['idTutor'] !== $idTutorSesion) {
+            if (!$esAdmin && (int)$actual['idTutor'] !== tutorSesion()) {
                 responder(['exito' => false, 'mensaje' => 'No puedes modificar tutorías de otro tutor.'], 403);
             }
             $idTutor = (int)$actual['idTutor'];
@@ -270,6 +274,15 @@ if ($metodo === 'POST' || $metodo === 'PUT') {
             responder(['exito' => true, 'mensaje' => 'Tutoría modificada exitosamente.']);
         }
 
+        // Solo permitir publicar cursos asignados formalmente al tutor.
+        $stmtAsignado = $pdo->prepare(
+            'SELECT COUNT(*) FROM tblTutorCursos WHERE idTutor = ? AND idCurso = ?'
+        );
+        $stmtAsignado->execute([$idTutor, $idCurso]);
+        if ((int)$stmtAsignado->fetchColumn() === 0) {
+            responder(['exito' => false, 'mensaje' => 'Ese curso no está asignado al tutor.'], 403);
+        }
+
         $stmtCurso = $pdo->prepare("SELECT nombreCurso FROM tblCursos WHERE idCurso = ?");
         $stmtCurso->execute([$idCurso]);
         $curso = $stmtCurso->fetch(PDO::FETCH_ASSOC);
@@ -292,6 +305,7 @@ if ($metodo === 'POST' || $metodo === 'PUT') {
 }
 
 if ($metodo === 'DELETE') {
+    verificarRol(['Administrador', 'Tutor']);
     try {
         $input = json_decode(file_get_contents('php://input'), true) ?? [];
         $idDisp = (int)($input['idDisponibilidad'] ?? 0);
@@ -306,7 +320,7 @@ if ($metodo === 'DELETE') {
         if (!$disp) {
             responder(['exito' => false, 'mensaje' => 'La tutoría no existe.'], 404);
         }
-        if (!$esAdmin && (int)$disp['idTutor'] !== $idTutorSesion) {
+        if (!$esAdmin && (int)$disp['idTutor'] !== tutorSesion()) {
             responder(['exito' => false, 'mensaje' => 'No puedes eliminar tutorías de otro tutor.'], 403);
         }
 

@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/../php/auth_middleware.php';
+verificarRol(['Estudiante']);
 // api/validar_reserva.php - Validación Backend de Cupos (30 Máx) y Traslapes
 header('Content-Type: application/json; charset=utf-8');
 
@@ -11,8 +13,13 @@ if (file_exists('../conexion.php')) {
 // Comparar fechas usando la hora de Guatemala en MySQL.
 $pdo->exec("SET time_zone = '-06:00'");
 
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
+    echo json_encode(['valido' => false, 'mensaje' => 'Método no permitido.']);
+    exit;
+}
 $input = json_decode(file_get_contents('php://input'), true) ?? $_POST;
-$noCarnet = trim($input['noCarnetEstudiante'] ?? '');
+$noCarnet = carnetSesion(); // Nunca confiar en el carné enviado por el navegador.
 $idDisp   = (int)($input['idDisponibilidad'] ?? 0);
 
 if (empty($noCarnet) || $idDisp <= 0) {

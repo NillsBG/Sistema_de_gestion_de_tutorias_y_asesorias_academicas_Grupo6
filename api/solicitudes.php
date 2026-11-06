@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/../php/auth_middleware.php';
+verificarRol(['Administrador', 'Tutor', 'Estudiante']);
 // api/solicitudes.php - Gestión de Solicitudes y Reservas de Tutoría con Días y Expiración
 header('Content-Type: application/json; charset=utf-8');
 
@@ -18,6 +20,13 @@ if ($metodo === 'GET') {
         $noCarnet = trim($_GET['noCarnetEstudiante'] ?? '');
         $idTutor  = (int)($_GET['idTutor'] ?? 0);
         $soloActivas = (int)($_GET['soloActivas'] ?? 0);
+        if (rolActual() === 'estudiante') {
+            $noCarnet = carnetSesion();
+            $idTutor = 0;
+        } elseif (rolActual() === 'tutor') {
+            $noCarnet = '';
+            $idTutor = tutorSesion();
+        }
 
         $sql = "
             SELECT 
@@ -75,9 +84,10 @@ if ($metodo === 'GET') {
         echo json_encode(['exito' => false, 'mensaje' => 'Error al obtener solicitudes: ' . $e->getMessage()]);
     }
 } elseif ($metodo === 'POST') {
+    verificarRol(['Estudiante']);
     try {
         $input = json_decode(file_get_contents('php://input'), true) ?? $_POST;
-        $noCarnet = trim($input['noCarnetEstudiante'] ?? '');
+        $noCarnet = carnetSesion();
         $idDisp   = (int)($input['idDisponibilidad'] ?? 0);
 
         if (empty($noCarnet) || $idDisp <= 0) {
@@ -124,6 +134,39 @@ if ($metodo === 'GET') {
             exit;
         }
 
+        // Comprobar propiedad y permisos de la solicitud antes de actualizar.
+        $propietario = $pdo->prepare("
+            SELECT s.noCarnetEstudiante, s.estadoSolicitud, d.idTutor
+            FROM tblSolicitudes s
+            INNER JOIN tblDisponibilidad d ON d.idDisponibilidad = s.idDisponibilidad
+            WHERE s.idSolicitud = ?
+        ");
+        $propietario->execute([$idSol]);
+        $actual = $propietario->fetch(PDO::FETCH_ASSOC);
+        if (!$actual) {
+            http_response_code(404);
+            echo json_encode(['exito' => false, 'mensaje' => 'Solicitud no encontrada.']);
+            exit;
+        }
+        if (rolActual() === 'estudiante') {
+            if ($actual['noCarnetEstudiante'] !== carnetSesion() || $estado !== 'Cancelada') {
+                errorAcceso(403, 'Solo puedes cancelar tus propias solicitudes.');
+            }
+            if ($actual['estadoSolicitud'] !== 'Pendiente') {
+                http_response_code(409);
+                echo json_encode(['exito' => false, 'mensaje' => 'Solo puedes cancelar solicitudes pendientes.']);
+                exit;
+            }
+        } elseif (rolActual() === 'tutor') {
+            if ((int)$actual['idTutor'] !== tutorSesion() || !in_array($estado, ['Aprobada', 'Rechazada'], true)) {
+                errorAcceso(403, 'Solo puedes atender solicitudes de tus tutorías.');
+            }
+            if ($actual['estadoSolicitud'] !== 'Pendiente') {
+                http_response_code(409);
+                echo json_encode(['exito' => false, 'mensaje' => 'La solicitud ya fue atendida.']);
+                exit;
+            }
+        }
         $stmt = $pdo->prepare("UPDATE tblSolicitudes SET estadoSolicitud = ? WHERE idSolicitud = ?");
         $stmt->execute([$estado, $idSol]);
 
@@ -132,5 +175,8 @@ if ($metodo === 'GET') {
         http_response_code(500);
         echo json_encode(['exito' => false, 'mensaje' => 'Error al actualizar solicitud: ' . $e->getMessage()]);
     }
+} else {
+    http_response_code(405);
+    echo json_encode(['exito' => false, 'mensaje' => 'Método no permitido.']);
 }
 ?>
