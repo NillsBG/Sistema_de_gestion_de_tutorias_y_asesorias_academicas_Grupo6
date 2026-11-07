@@ -1,0 +1,48 @@
+SEGURIDAD - ETAPAS 2 Y 6 (VERSIÓN DE TUTORÍAS CON VARIOS DÍAS)
+
+CAMBIOS
+1. Prevención de inyección SQL: se mantienen/validan consultas parametrizadas PDO
+   en las API y en el login. PDO::ATTR_EMULATE_PREPARES = false.
+2. Protección contra fuerza bruta en php/login.php:
+   - Máximo 5 fallos por usuario/carné en una ventana de 15 minutos.
+   - Máximo 30 fallos por IP en una ventana de 15 minutos.
+   - Al superar el límite, bloqueo durante 15 minutos (HTTP 429).
+   - Los contadores se almacenan en tblIntentosLogin usando hashes SHA-256
+     de identificador e IP, y transacciones con SELECT ... FOR UPDATE.
+   - Inicio de sesión exitoso limpia el contador del identificador, no el de IP.
+   - Respuestas genéricas: no se divulgan detalles internos de PDO.
+   - Se regenera el ID de sesión al iniciar sesión.
+
+INSTALACIÓN
+A. Hacer copia de seguridad de archivos y datos MySQL.
+B. Importar SQL_SOLO_EJECUTAR_UNA_VEZ.sql desde phpMyAdmin / MySQL
+   CON LA BASE EXISTENTE 'tutoria_umg'. No ejecutar dbtutoria_umg(1).sql,
+   ya que contiene DROP DATABASE.
+C. Copiar las carpetas php/ y api/ a la raíz del proyecto y reemplazar
+   los archivos correspondientes. Mantener el resto de archivos del ZIP
+   si todavía no se instaló la fase anterior de permisos por roles.
+D. Verificar la configuración de api/conexion.php: usa 127.0.0.1:3307,
+   base tutoria_umg y usuario root sin contraseña, tal como archivo recibido.
+   Para despliegue real utilizar credenciales restringidas y secretos fuera
+   del directorio público. No exponer XAMPP a Internet con root sin clave.
+
+PRUEBAS
+1. Login correcto: debe entrar a su perfil.
+2. Contraseña errónea 4 veces: mensaje genérico HTTP 401.
+3. Quinto fallo para el mismo usuario: queda bloqueado (HTTP 429
+   en los intentos siguientes) por 15 minutos.
+4. Credenciales correctas durante el bloqueo: HTTP 429.
+5. Pasados 15 min, inicio correcto vuelve a funcionar.
+6. Entrada con caracteres como comilla simple en usuario: no debe provocar
+   errores SQL ni acceso indebido.
+7. Comprobar API de disponibilidad, solicitudes y dashboard con perfiles.
+
+LÍMITES DE ESTA ETAPA
+- NO convierte contraseñas existentes a hashes. La compatibilidad temporal
+  con contraseñas en texto plano sigue activa: requiere la etapa 1 pendiente.
+- NO añade tokens CSRF, políticas de cookies HTTPS o auditoría completa.
+- No se hicieron pruebas de ejecución con una base MySQL real: solo sintaxis.
+- La limitación de 30 intentos/IP puede afectar a otros usuarios que comparten
+  una misma conexión; se puede ajustar según el despliegue.
+- Si la tabla tblIntentosLogin no está instalada, el inicio de sesión
+  devolverá 500 y registrará el fallo internamente, por diseño (fail-closed).

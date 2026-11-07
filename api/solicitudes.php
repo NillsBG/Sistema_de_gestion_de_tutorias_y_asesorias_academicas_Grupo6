@@ -81,7 +81,7 @@ if ($metodo === 'GET') {
         echo json_encode(['exito' => true, 'datos' => $datos], JSON_UNESCAPED_UNICODE);
     } catch (Exception $e) {
         http_response_code(500);
-        echo json_encode(['exito' => false, 'mensaje' => 'Error al obtener solicitudes: ' . $e->getMessage()]);
+        echo json_encode(['exito' => false, 'mensaje' => 'No fue posible completar la operación.']);
     }
 } elseif ($metodo === 'POST') {
     verificarRol(['Estudiante']);
@@ -120,7 +120,7 @@ if ($metodo === 'GET') {
         echo json_encode(['exito' => true, 'mensaje' => 'Solicitud enviada correctamente.'], JSON_UNESCAPED_UNICODE);
     } catch (Exception $e) {
         http_response_code(500);
-        echo json_encode(['exito' => false, 'mensaje' => 'Error al guardar solicitud: ' . $e->getMessage()]);
+        echo json_encode(['exito' => false, 'mensaje' => 'No fue posible completar la operación.']);
     }
 } elseif ($metodo === 'PUT') {
     try {
@@ -173,7 +173,7 @@ if ($metodo === 'GET') {
         echo json_encode(['exito' => true, 'mensaje' => 'Estado de la solicitud actualizado a ' . $estado], JSON_UNESCAPED_UNICODE);
     } catch (Exception $e) {
         http_response_code(500);
-        echo json_encode(['exito' => false, 'mensaje' => 'Error al actualizar solicitud: ' . $e->getMessage()]);
+        echo json_encode(['exito' => false, 'mensaje' => 'No fue posible completar la operación.']);
     }
 } else {
     http_response_code(405);

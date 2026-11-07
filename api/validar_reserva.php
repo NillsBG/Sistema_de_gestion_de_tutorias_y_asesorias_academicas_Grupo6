@@ -107,6 +107,6 @@ try {
     echo json_encode(['valido' => true, 'mensaje' => 'Reserva válida.']);
 
 } catch (Exception $e) {
-    echo json_encode(['valido' => false, 'mensaje' => 'Error al validar reserva: ' . $e->getMessage()]);
+    echo json_encode(['valido' => false, 'mensaje' => 'No fue posible completar la operación.']);
 }
 ?>

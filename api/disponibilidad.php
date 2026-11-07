@@ -210,7 +210,7 @@ if ($metodo === 'GET') {
 
         responder(['exito' => true, 'datos' => $resultados]);
     } catch (Exception $e) {
-        responder(['exito' => false, 'mensaje' => 'Error al obtener disponibilidades: ' . $e->getMessage()], 500);
+        responder(['exito' => false, 'mensaje' => 'No fue posible completar la operación.'], 500);
     }
 }
 
@@ -300,7 +300,7 @@ if ($metodo === 'POST' || $metodo === 'PUT') {
         ]);
         responder(['exito' => true, 'mensaje' => 'Se publicó la tutoría con todos los días seleccionados.']);
     } catch (Exception $e) {
-        responder(['exito' => false, 'mensaje' => 'Error al guardar tutoría: ' . $e->getMessage()], 500);
+        responder(['exito' => false, 'mensaje' => 'No fue posible completar la operación.'], 500);
     }
 }
 
@@ -341,7 +341,7 @@ if ($metodo === 'DELETE') {
         $stmtD->execute([$idDisp]);
         responder(['exito' => true, 'mensaje' => 'Tutoría eliminada exitosamente.']);
     } catch (Exception $e) {
-        responder(['exito' => false, 'mensaje' => 'Error al eliminar tutoría: ' . $e->getMessage()], 500);
+        responder(['exito' => false, 'mensaje' => 'No fue posible completar la operación.'], 500);
     }
 }
 ?>
