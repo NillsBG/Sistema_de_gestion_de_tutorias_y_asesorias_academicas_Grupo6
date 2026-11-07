@@ -20,8 +20,9 @@ try {
     $pass,
     $options);
 } catch (PDOException $e) {
+    error_log('Error de conexión PDO: ' . $e->getMessage());
     http_response_code(500);
-    echo json_encode(['exito' => false, 'mensaje' => 'Error de conexión a la base de datos: ' . $e->getMessage()]);
+    echo json_encode(['exito' => false, 'mensaje' => 'No fue posible conectar con la base de datos.']);
     exit;
 }
 ?>

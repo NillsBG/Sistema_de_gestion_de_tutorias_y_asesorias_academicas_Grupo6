@@ -89,7 +89,7 @@ if ($metodo === 'GET') {
 
         echo json_encode(['exito' => true, 'mensaje' => 'Curso asignado al tutor exitosamente.']);
     } catch (Exception $e) {
-        echo json_encode(['exito' => false, 'mensaje' => 'Error al asignar curso: ' . $e->getMessage()]);
+        echo json_encode(['exito' => false, 'mensaje' => 'No fue posible completar la operación.']);
     }
 } elseif ($metodo === 'DELETE') {
     verificarRol(['Administrador']);
@@ -103,7 +103,7 @@ if ($metodo === 'GET') {
 
         echo json_encode(['exito' => true, 'mensaje' => 'Asignación eliminada exitosamente.']);
     } catch (Exception $e) {
-        echo json_encode(['exito' => false, 'mensaje' => 'Error al eliminar asignación: ' . $e->getMessage()]);
+        echo json_encode(['exito' => false, 'mensaje' => 'No fue posible completar la operación.']);
     }
 } else {
     http_response_code(405);
