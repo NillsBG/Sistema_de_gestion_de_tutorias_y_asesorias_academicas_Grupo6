@@ -1,8 +1,7 @@
 <?php
 // Control de acceso por sesión y roles para vistas y API.
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
+require_once __DIR__ . '/seguridad_sesion.php';
+iniciarSesionSegura();
 
 function rolActual(): string {
     $rol = strtolower(trim((string)($_SESSION['rol'] ?? '')));

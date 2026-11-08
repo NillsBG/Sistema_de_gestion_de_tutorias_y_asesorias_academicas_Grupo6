@@ -126,5 +126,6 @@ verificarRol(['Administrador', 'Admin']);
     </footer>
 
     <script src="js/admin.js"></script>
+    <script src="js/actividad_sesion.js"></script>
 </body>
 </html>

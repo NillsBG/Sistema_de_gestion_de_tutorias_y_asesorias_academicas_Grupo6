@@ -128,5 +128,6 @@ verificarRol(['Estudiante']);
     </footer>
 
     <script src="js/estudiante.js"></script>
+    <script src="js/actividad_sesion.js"></script>
 </body>
 </html>

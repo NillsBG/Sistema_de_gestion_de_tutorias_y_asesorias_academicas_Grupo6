@@ -2,7 +2,8 @@
 // php/login.php - Login con consultas preparadas y límite de intentos fallidos.
 header('Content-Type: application/json; charset=utf-8');
 header('Cache-Control: no-store');
-if (session_status() === PHP_SESSION_NONE) session_start();
+require_once __DIR__ . '/seguridad_sesion.php';
+iniciarSesionSegura();
 
 function responderLogin(bool $exito, string $mensaje, int $codigo = 200, array $extra = []): void {
     http_response_code($codigo);
@@ -81,6 +82,7 @@ try {
     $_SESSION = [];
     $rol = strtolower($usuario['nombreRol']);
     $_SESSION['idUsuario'] = (int)$usuario['idUsuario'];
+    registrarActividadReal();
     $_SESSION['username'] = $usuario['username'];
     $_SESSION['rol'] = $usuario['nombreRol'];
     $nombre = $usuario['nombreEstudiante'] ?? $usuario['nombreTutor'] ?? $usuario['username'];
