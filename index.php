@@ -21,7 +21,7 @@ switch ($rol) {
         include 'vistas/admin.php';
         break;
     default:
-        session_destroy();
+        destruirSesionSegura();
         include 'vistas/login.php';
         break;
 }

@@ -153,5 +153,6 @@ verificarRol(['Tutor', 'Administrador']);
     </footer>
 
     <script src="js/tutor.js"></script>
+    <script src="js/actividad_sesion.js"></script>
 </body>
 </html>
