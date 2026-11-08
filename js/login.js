@@ -8,7 +8,7 @@ async function procesarLogin(event) {
     if (!usuarioInput || !claveInput) return;
 
     const usuarioVal = usuarioInput.value.trim();
-    const claveVal   = claveInput.value.trim();
+    const claveVal   = claveInput.value;
 
     if (!usuarioVal || !claveVal) {
         alert('Por favor ingresa tu usuario y contraseña.');
@@ -16,7 +16,7 @@ async function procesarLogin(event) {
     }
 
     try {
-        const respuesta = await fetch('php/login.php', {
+        const respuesta = await fetchSeguro('php/login.php', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ usuario: usuarioVal, clave: claveVal })

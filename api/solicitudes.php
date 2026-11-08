@@ -1,6 +1,8 @@
 <?php
 require_once __DIR__ . '/../php/auth_middleware.php';
 verificarRol(['Administrador', 'Tutor', 'Estudiante']);
+require_once __DIR__ . '/../php/csrf.php';
+verificarCsrf();
 // api/solicitudes.php - Gestión de Solicitudes y Reservas de Tutoría con Días y Expiración
 header('Content-Type: application/json; charset=utf-8');
 

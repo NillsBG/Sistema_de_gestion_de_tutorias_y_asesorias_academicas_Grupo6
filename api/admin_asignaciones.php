@@ -1,6 +1,8 @@
 <?php
 require_once __DIR__ . '/../php/auth_middleware.php';
 verificarRol(['Administrador', 'Tutor']);
+require_once __DIR__ . '/../php/csrf.php';
+verificarCsrf();
 // api/admin_asignaciones.php - Endpoint de Administrador para Asignar Cursos a Tutores
 header('Content-Type: application/json; charset=utf-8');
 

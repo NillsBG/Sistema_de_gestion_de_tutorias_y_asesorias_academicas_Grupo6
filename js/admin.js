@@ -1,3 +1,10 @@
+// Escapar datos de texto antes de insertarlos en plantillas HTML.
+function escAdmin(valor) {
+    const span = document.createElement('span');
+    span.textContent = valor == null ? '' : String(valor);
+    return span.innerHTML.replace(/\"/g, '&quot;').replace(/'/g, '&#39;');
+}
+
 // js/admin.js - Lógica del Administrador para Asignación de Cursos a Tutores por Perfil
 let listaTutoresGlobal = [];
 
@@ -10,26 +17,27 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 async function cargarMetricsDashboard() {
-    const resp = await fetch('api/dashboard.php');
+    const resp = await fetchSeguro('api/dashboard.php');
     const data = await resp.json();
     if (data.exito && data.metricas) {
         document.getElementById('metric-total').innerText = data.metricas.total_solicitudes;
         document.getElementById('metric-aprobadas').innerText = data.metricas.aprobadas;
         document.getElementById('metric-pendientes').innerText = data.metricas.pendientes;
-        document.getElementById('metric-tasa').innerText = data.metricas.tasa_atencion;
+        const tasa = document.getElementById('metric-tasa');
+        if (tasa) tasa.textContent = data.metricas.tasa_atencion;
     }
 }
 
 async function cargarTutoresAdmin() {
     const select = document.getElementById('admin-select-tutor');
-    const resp = await fetch('api/admin_asignaciones.php?accion=tutores');
+    const resp = await fetchSeguro('api/admin_asignaciones.php?accion=tutores');
     const data = await resp.json();
 
     if (data.exito && Array.isArray(data.datos)) {
         listaTutoresGlobal = data.datos;
         select.innerHTML = '<option value="">Selecciona un tutor docente...</option>';
         data.datos.forEach(t => {
-            select.innerHTML += `<option value="${t.idTutor}">${t.nombreTutor} (${t.tituloProfesional})</option>`;
+            select.innerHTML += `<option value="${Number(t.idTutor) || 0}">${escAdmin(t.nombreTutor)} (${escAdmin(t.tituloProfesional)})</option>`;
         });
     }
 }
@@ -46,8 +54,8 @@ function cargarPerfilTutorSeleccionado() {
     if (tutor) {
         box.innerHTML = `
             <div class="perfil-card-info">
-                <strong>Perfil Docente:</strong> ${tutor.tituloProfesional}<br>
-                <strong>Especialidad:</strong> ${tutor.especialidad}
+                <strong>Perfil Docente:</strong> ${escAdmin(tutor.tituloProfesional)}<br>
+                <strong>Especialidad:</strong> ${escAdmin(tutor.especialidad)}
             </div>
         `;
     }
@@ -55,13 +63,13 @@ function cargarPerfilTutorSeleccionado() {
 
 async function cargarCarrerasAdmin() {
     const select = document.getElementById('admin-select-carrera');
-    const resp = await fetch('api/admin_asignaciones.php?accion=carreras');
+    const resp = await fetchSeguro('api/admin_asignaciones.php?accion=carreras');
     const data = await resp.json();
 
     if (data.exito && Array.isArray(data.datos)) {
         select.innerHTML = '<option value="">Todas las Carreras</option>';
         data.datos.forEach(c => {
-            select.innerHTML += `<option value="${c.idCarrera}">${c.codigoCarrera} - ${c.nombreCarrera}</option>`;
+            select.innerHTML += `<option value="${Number(c.idCarrera) || 0}">${escAdmin(c.codigoCarrera)} - ${escAdmin(c.nombreCarrera)}</option>`;
         });
     }
 }
@@ -70,13 +78,13 @@ async function cargarCursosPorCarreraAdmin() {
     const idCarrera = document.getElementById('admin-select-carrera').value;
     const select = document.getElementById('admin-select-curso');
 
-    const resp = await fetch(`api/admin_asignaciones.php?accion=cursos&idCarrera=${idCarrera}`);
+    const resp = await fetchSeguro(`api/admin_asignaciones.php?accion=cursos&idCarrera=${idCarrera}`);
     const data = await resp.json();
 
     select.innerHTML = '<option value="">Selecciona un curso a habilitar...</option>';
     if (data.exito && Array.isArray(data.datos)) {
         data.datos.forEach(c => {
-            select.innerHTML += `<option value="${c.idCurso}">${c.codigoCurso} - ${c.nombreCurso} (${c.codigoCarrera})</option>`;
+            select.innerHTML += `<option value="${Number(c.idCurso) || 0}">${escAdmin(c.codigoCurso)} - ${escAdmin(c.nombreCurso)} (${escAdmin(c.codigoCarrera)})</option>`;
         });
     }
 }
@@ -92,7 +100,7 @@ async function guardarAsignacionCurso(event) {
         return;
     }
 
-    const resp = await fetch('api/admin_asignaciones.php', {
+    const resp = await fetchSeguro('api/admin_asignaciones.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ idTutor: idTutor, idCurso: idCurso })
@@ -109,7 +117,7 @@ async function guardarAsignacionCurso(event) {
 
 async function cargarAsignacionesActivasAdmin() {
     const tabla = document.getElementById('tabla-asignaciones-admin');
-    const resp = await fetch('api/admin_asignaciones.php?accion=listar_asignaciones');
+    const resp = await fetchSeguro('api/admin_asignaciones.php?accion=listar_asignaciones');
     const data = await resp.json();
 
     tabla.innerHTML = '';
@@ -117,11 +125,11 @@ async function cargarAsignacionesActivasAdmin() {
         data.datos.forEach(a => {
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td class="texto-resaltado">${a.nombreTutor}</td>
-                <td>${a.codigoCurso} - ${a.nombreCurso}</td>
-                <td><span class="badge-carrera-small">${a.codigoCarrera}</span></td>
+                <td class="texto-resaltado">${escAdmin(a.nombreTutor)}</td>
+                <td>${escAdmin(a.codigoCurso)} - ${escAdmin(a.nombreCurso)}</td>
+                <td><span class="badge-carrera-small">${escAdmin(a.codigoCarrera)}</span></td>
                 <td class="texto-derecha">
-                    <button type="button" class="btn btn-peligro-suave" onclick="eliminarAsignacion(${a.idTutor}, ${a.idCurso})">Quitar</button>
+                    <button type="button" class="btn btn-peligro-suave" onclick="eliminarAsignacion(${Number(a.idTutor) || 0}, ${Number(a.idCurso) || 0})">Quitar</button>
                 </td>
             `;
             tabla.appendChild(tr);
@@ -134,7 +142,7 @@ async function cargarAsignacionesActivasAdmin() {
 async function eliminarAsignacion(idTutor, idCurso) {
     if (!confirm('¿Deseas revocar la asignación de este curso para el tutor?')) return;
 
-    const resp = await fetch('api/admin_asignaciones.php', {
+    const resp = await fetchSeguro('api/admin_asignaciones.php', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ idTutor: idTutor, idCurso: idCurso })
@@ -148,6 +156,6 @@ async function eliminarAsignacion(idTutor, idCurso) {
 }
 
 async function cerrarSesion() {
-    await fetch('php/logout.php');
+    await fetchSeguro('php/logout.php', { method: 'POST' });
     window.location.reload();
 }

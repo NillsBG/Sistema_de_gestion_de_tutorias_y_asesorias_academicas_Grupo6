@@ -1,6 +1,8 @@
 <?php
 require_once __DIR__ . '/../php/auth_middleware.php';
 verificarRol(['Administrador']);
+require_once __DIR__ . '/../php/csrf.php';
+verificarCsrf();
 // api/dashboard.php - Métricas Generales del Sistema
 header('Content-Type: application/json; charset=utf-8');
 
