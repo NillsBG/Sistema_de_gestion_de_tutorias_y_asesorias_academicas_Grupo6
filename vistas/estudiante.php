@@ -5,6 +5,7 @@ verificarRol(['Estudiante']);
 <!DOCTYPE html>
 <html lang="es">
 <head>
+    <meta name="csrf-token" content="<?php echo htmlspecialchars(tokenCsrf(), ENT_QUOTES, 'UTF-8'); ?>">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Portal Estudiante - Sistema de Tutorías UMG</title>
@@ -127,6 +128,7 @@ verificarRol(['Estudiante']);
         <p class="creditos-equipo">Proyecto Final - Desarrollo Web (Grupo 6)</p>
     </footer>
 
+    <script src="js/seguridad_fetch.js"></script>
     <script src="js/estudiante.js"></script>
     <script src="js/actividad_sesion.js"></script>
 </body>

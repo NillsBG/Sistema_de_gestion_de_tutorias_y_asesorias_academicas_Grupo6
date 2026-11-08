@@ -19,7 +19,7 @@
         if (expirando) return;
         if (Date.now() - ultimaInteraccion >= LIMITE) return salirPorInactividad();
         try {
-            const r = await fetch(URL, {method: 'POST', credentials: 'same-origin', cache: 'no-store'});
+            const r = await fetchSeguro(URL, {method: 'POST', credentials: 'same-origin', cache: 'no-store'});
             const datos = await r.json();
             if (r.status === 401 || !datos.autenticado) salirPorInactividad();
         } catch (error) {

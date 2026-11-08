@@ -1,6 +1,8 @@
 <?php
 require_once __DIR__ . '/../php/auth_middleware.php';
 verificarRol(['Estudiante']);
+require_once __DIR__ . '/../php/csrf.php';
+verificarCsrf();
 // api/validar_reserva.php - Validación Backend de Cupos (30 Máx) y Traslapes
 header('Content-Type: application/json; charset=utf-8');
 

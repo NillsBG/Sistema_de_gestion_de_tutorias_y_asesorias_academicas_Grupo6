@@ -17,6 +17,8 @@ if (empty($_SESSION['idUsuario'])) {
     exit;
 }
 if ($metodo === 'POST') {
+    require_once __DIR__ . '/csrf.php';
+    verificarCsrf();
     // Solo interacciones humanas en js/actividad_sesion.js envían POST.
     // Comprobar origen cuando el navegador lo envíe.
     $origen = $_SERVER['HTTP_ORIGIN'] ?? '';

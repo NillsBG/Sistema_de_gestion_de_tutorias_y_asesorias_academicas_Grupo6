@@ -16,6 +16,9 @@ if (($_SERVER['REQUEST_METHOD'] ?? '') !== 'POST') {
     responderLogin(false, 'Método no permitido.', 405);
 }
 
+require_once __DIR__ . '/csrf.php';
+verificarCsrf();
+
 $input = json_decode(file_get_contents('php://input'), true);
 if (!is_array($input)) $input = $_POST;
 $usuarioIngresado = trim((string)($input['usuario'] ?? $input['username'] ?? ''));

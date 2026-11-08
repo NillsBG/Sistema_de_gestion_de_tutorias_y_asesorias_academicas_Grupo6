@@ -35,7 +35,7 @@ function formatearHora(horaStr) {
 
 async function cargarDisponibilidadEstudiante() {
     try {
-        const respuesta = await fetch('api/disponibilidad.php', { cache: 'no-store' });
+        const respuesta = await fetchSeguro('api/disponibilidad.php', { cache: 'no-store' });
         const resultado = await respuesta.json();
 
         if (resultado.exito && Array.isArray(resultado.datos)) {
@@ -164,13 +164,13 @@ function actualizarPosicionCarrusel() {
 /* ===================== SOLICITUDES Y MIS TUTORÍAS ASIGNADAS ===================== */
 async function cargarSolicitudesEstudiante() {
     try {
-        const respSes = await fetch('php/session_check.php');
+        const respSes = await fetchSeguro('php/session_check.php');
         const sesData = await respSes.json();
         const carnet  = sesData.usuario.noCarnetCompleto || sesData.usuario.username;
 
         // Solo tutorías cuyo horario NO ha finalizado.
         // El mismo resultado alimenta las tarjetas y el historial visible.
-        const resp = await fetch(
+        const resp = await fetchSeguro(
             `api/solicitudes.php?noCarnetEstudiante=${encodeURIComponent(carnet)}&soloActivas=1`,
             { cache: 'no-store' }
         );
@@ -306,11 +306,11 @@ function actualizarSliderInscritos() {
 async function solicitarTutoria(idDisp) {
     if (!confirm('¿Deseas solicitar este horario de tutoría?')) return;
 
-    const respSes = await fetch('php/session_check.php');
+    const respSes = await fetchSeguro('php/session_check.php');
     const sesData = await respSes.json();
     const carnet  = sesData.usuario.noCarnetCompleto || sesData.usuario.username;
 
-    const resVal = await fetch('api/validar_reserva.php', {
+    const resVal = await fetchSeguro('api/validar_reserva.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ noCarnetEstudiante: carnet, idDisponibilidad: idDisp })
@@ -322,7 +322,7 @@ async function solicitarTutoria(idDisp) {
         return;
     }
 
-    const resSol = await fetch('api/solicitudes.php', {
+    const resSol = await fetchSeguro('api/solicitudes.php', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ noCarnetEstudiante: carnet, idDisponibilidad: idDisp })
@@ -341,7 +341,7 @@ async function solicitarTutoria(idDisp) {
 async function cancelarSolicitud(idSol) {
     if (!confirm('¿Estás seguro de cancelar esta reserva de tutoría?')) return;
 
-    const resp = await fetch('api/solicitudes.php', {
+    const resp = await fetchSeguro('api/solicitudes.php', {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ idSolicitud: idSol, estadoSolicitud: 'Cancelada' })
@@ -386,6 +386,6 @@ function configurarFiltrosEstudiante() {
 }
 
 async function cerrarSesion() {
-    await fetch('php/logout.php');
+    await fetchSeguro('php/logout.php', { method: 'POST' });
     window.location.reload();
 }

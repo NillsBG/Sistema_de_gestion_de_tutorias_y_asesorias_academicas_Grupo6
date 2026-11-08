@@ -26,7 +26,7 @@ const NOMBRES_DIAS = {
 document.addEventListener('DOMContentLoaded', async () => {
 
     try {
-        const respSes = await fetch('php/session_check.php');
+        const respSes = await fetchSeguro('php/session_check.php');
         const sesData = await respSes.json();
 
         if (!sesData.autenticado || !sesData.usuario) {
@@ -194,7 +194,7 @@ async function cargarCursosAsignadosTutor() {
 
     try {
 
-        const respuesta = await fetch(
+        const respuesta = await fetchSeguro(
             obtenerUrlApi('admin_asignaciones.php'),
             { cache: 'no-store' }
         );
@@ -303,7 +303,7 @@ async function guardarDisponibilidad(event) {
 
     try {
 
-        const respuesta = await fetch(
+        const respuesta = await fetchSeguro(
             obtenerUrlApi('disponibilidad.php'),
             {
                 method: 'POST',
@@ -361,7 +361,7 @@ async function cargarMisTutoriasPublicadas() {
         const url =
             `${obtenerUrlApi('disponibilidad.php')}?idTutor=${idTutorSesion}`;
 
-        const respuesta = await fetch(url, { cache: 'no-store' });
+        const respuesta = await fetchSeguro(url, { cache: 'no-store' });
         const data = await respuesta.json();
 
         pista.innerHTML = '';
@@ -771,7 +771,7 @@ async function guardarEdicionTutoria(idDisponibilidad) {
 
     try {
 
-        const respuesta = await fetch(
+        const respuesta = await fetchSeguro(
             obtenerUrlApi('disponibilidad.php'),
             {
                 method: 'PUT',
@@ -824,7 +824,7 @@ async function eliminarTutoria(idDisponibilidad) {
 
         const url = obtenerUrlApi('disponibilidad.php');
 
-        let respuesta = await fetch(url, {
+        let respuesta = await fetchSeguro(url, {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json'
@@ -844,7 +844,7 @@ async function eliminarTutoria(idDisponibilidad) {
 
             if (!confirmar) return;
 
-            respuesta = await fetch(url, {
+            respuesta = await fetchSeguro(url, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json'
@@ -889,7 +889,7 @@ async function cargarSolicitudesTutor() {
         const url =
             `${obtenerUrlApi('solicitudes.php')}?idTutor=${idTutorSesion}&soloActivas=1`;
 
-        const respuesta = await fetch(url, { cache: 'no-store' });
+        const respuesta = await fetchSeguro(url, { cache: 'no-store' });
         const data = await respuesta.json();
 
         tabla.innerHTML = '';
@@ -985,7 +985,7 @@ async function cambiarEstado(idSolicitud, estadoSolicitud) {
 
     try {
 
-        const respuesta = await fetch(
+        const respuesta = await fetchSeguro(
             obtenerUrlApi('solicitudes.php'),
             {
                 method: 'PUT',
@@ -1027,7 +1027,7 @@ async function cerrarSesion() {
         ? '../php/logout.php'
         : 'php/logout.php';
 
-    await fetch(url);
+    await fetchSeguro(url, { method: 'POST' });
 
     window.location.reload();
 }
