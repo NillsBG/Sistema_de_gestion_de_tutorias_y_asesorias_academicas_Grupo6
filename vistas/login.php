@@ -45,6 +45,44 @@
                         <i class="fa-solid fa-right-to-bracket"></i> Ingresar al Sistema
                     </button>
                 </form>
+                <p class="texto-centro" style="margin-top:1rem;">
+                    ¿Aún no tienes cuenta?
+                    <button type="button" class="btn btn-secundario" onclick="mostrarRegistro(true)" style="margin-left:.4rem;">Solicitar una cuenta</button>
+                </p>
+            </div>
+            <div id="panel-registro" class="tarjeta tarjeta-login" style="display:none;margin-top:1rem;">
+                <h2 class="titulo-seccion texto-centro">Solicitud de cuenta</h2>
+                <p class="subtitulo-seccion texto-centro">Un administrador revisará tu solicitud antes de activar el acceso.</p>
+                <form id="form-registro" onsubmit="enviarSolicitudCuenta(event)">
+                    <div class="grupo-campo"><label class="etiqueta-campo" for="reg-rol">Tipo de cuenta</label>
+                        <select class="campo-entrada" id="reg-rol" required onchange="cambiarCamposRegistro()">
+                            <option value="Estudiante">Estudiante</option><option value="Tutor">Tutor</option>
+                        </select></div>
+                    <div class="grupo-campo"><label class="etiqueta-campo" for="reg-nombre">Nombre completo</label>
+                        <input class="campo-entrada" id="reg-nombre" maxlength="100" autocomplete="name" required></div>
+                    <div class="grupo-campo"><label class="etiqueta-campo" for="reg-correo">Correo electrónico</label>
+                        <input class="campo-entrada" id="reg-correo" type="email" maxlength="150" autocomplete="email" required></div>
+                    <div class="grupo-campo"><label class="etiqueta-campo" for="reg-usuario">Usuario</label>
+                        <input class="campo-entrada" id="reg-usuario" minlength="4" maxlength="100" pattern="[A-Za-z0-9._-]+" autocomplete="username" required></div>
+                    <div id="campos-estudiante">
+                        <div class="grupo-campo"><label class="etiqueta-campo" for="reg-carnet">Carné completo (ej. 0901-23-12345)</label>
+                            <input class="campo-entrada" id="reg-carnet" maxlength="20" required></div>
+                        <div class="grupo-campo"><label class="etiqueta-campo" for="reg-carrera">Carrera</label>
+                            <select class="campo-entrada" id="reg-carrera" required><option value="">Cargando carreras...</option></select></div>
+                    </div>
+                    <div id="campos-tutor" style="display:none;">
+                        <div class="grupo-campo"><label class="etiqueta-campo" for="reg-titulo">Título profesional</label>
+                            <input class="campo-entrada" id="reg-titulo" maxlength="100"></div>
+                        <div class="grupo-campo"><label class="etiqueta-campo" for="reg-especialidad">Especialidad</label>
+                            <input class="campo-entrada" id="reg-especialidad" maxlength="100"></div>
+                    </div>
+                    <div class="grupo-campo"><label class="etiqueta-campo" for="reg-clave">Contraseña nueva (mínimo 12 caracteres, letras y números)</label>
+                        <input class="campo-entrada" id="reg-clave" type="password" minlength="12" maxlength="72" autocomplete="new-password" required></div>
+                    <div class="grupo-campo"><label class="etiqueta-campo" for="reg-confirmar">Confirmar contraseña</label>
+                        <input class="campo-entrada" id="reg-confirmar" type="password" minlength="12" maxlength="72" autocomplete="new-password" required></div>
+                    <button type="submit" class="btn btn-oro ancho-total mt-sm">Enviar solicitud de cuenta</button>
+                    <button type="button" class="btn btn-secundario ancho-total mt-sm" onclick="mostrarRegistro(false)">Volver al inicio de sesión</button>
+                </form>
             </div>
         </section>
     </main>

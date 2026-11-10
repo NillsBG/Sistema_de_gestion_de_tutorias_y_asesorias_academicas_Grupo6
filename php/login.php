@@ -24,7 +24,7 @@ if (!is_array($input)) $input = $_POST;
 $usuarioIngresado = trim((string)($input['usuario'] ?? $input['username'] ?? ''));
 // No aplicar trim() a contraseñas: los espacios pueden ser parte de ellas.
 $clave = (string)($input['clave'] ?? $input['contrasena'] ?? '');
-if ($usuarioIngresado === '' || $clave === '' || mb_strlen($usuarioIngresado, 'UTF-8') > 100 || strlen($clave) > 1024) {
+if ($usuarioIngresado === '' || $clave === '' || strlen($usuarioIngresado) > 400 || strlen($clave) > 1024) {
     responderLogin(false, 'Ingresa un usuario y contraseña válidos.', 400);
 }
 
@@ -62,16 +62,14 @@ try {
         ]);
     }
 
-    // Compatibilidad temporal con las contraseñas de prueba anteriores.
-    // PENDIENTE para la etapa de hashing: ELIMINAR la comparación de texto plano.
-    $esValida = $usuario && (
-        password_verify($clave, $usuario['contrasena']) ||
-        hash_equals((string)$usuario['contrasena'], $clave)
-    );
+    // Solo hashes de password_hash; nunca comparar contraseñas en texto plano.
+    $esValida = $usuario && password_verify($clave, (string)$usuario['contrasena']);
 
     if (!$esValida) {
         $segundosNuevos = registrarFalloLogin($pdo, $usuarioLimite);
         if ($segundosNuevos > 0) {
+            require_once __DIR__ . '/auditoria.php';
+            registrarAuditoria($pdo, 'BLOQUEO_LOGIN', 'autenticacion', hash('sha256', strtolower($usuarioLimite)), null);
             header('Retry-After: ' . $segundosNuevos);
             responderLogin(false, 'Se alcanzó el límite de intentos. Acceso bloqueado durante ' . (int)ceil($segundosNuevos / 60) . ' minuto(s).', 429, [
                 'segundosRestantes' => $segundosNuevos
@@ -81,6 +79,12 @@ try {
     }
 
     limpiarIntentosUsuario($pdo, $usuarioLimite);
+    if (password_needs_rehash((string)$usuario['contrasena'], PASSWORD_DEFAULT)) {
+        $rehash = $pdo->prepare('UPDATE tblUsuarios SET contrasena = ? WHERE idUsuario = ?');
+        $rehash->execute([password_hash($clave, PASSWORD_DEFAULT), (int)$usuario['idUsuario']]);
+    }
+    require_once __DIR__ . '/auditoria.php';
+    registrarAuditoria($pdo, 'LOGIN_CORRECTO', 'usuario', (string)$usuario['idUsuario'], (int)$usuario['idUsuario']);
     session_regenerate_id(true);
     $_SESSION = [];
     $rol = strtolower($usuario['nombreRol']);

@@ -8,7 +8,7 @@
 
 function clavesDeLogin(string $usuario): array
 {
-    $usuario = mb_strtolower(trim($usuario), 'UTF-8');
+    $usuario = strtolower(trim($usuario));
     $ip = (string)($_SERVER['REMOTE_ADDR'] ?? 'desconocida');
     return [
         ['clave' => hash('sha256', 'usuario:' . $usuario), 'tipo' => 'usuario', 'maximo' => 5],

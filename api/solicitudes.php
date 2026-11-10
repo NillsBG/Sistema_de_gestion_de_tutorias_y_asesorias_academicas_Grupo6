@@ -98,29 +98,39 @@ if ($metodo === 'GET') {
             exit;
         }
 
-        // Evitar que se guarden nuevas solicitudes para horarios ya vencidos.
-        // La validación se hace también aquí, pues validar_reserva.php se puede omitir.
-        $stmt = $pdo->prepare("
-            INSERT INTO tblSolicitudes (noCarnetEstudiante, idDisponibilidad, estadoSolicitud)
-            SELECT ?, d.idDisponibilidad, 'Pendiente'
-            FROM tblDisponibilidad d
-            WHERE d.idDisponibilidad = ?
-              AND d.estadoDisponibilidad = 'disponible'
-              AND TIMESTAMP(d.fecha, d.horaInicio) > NOW()
-        ");
-        $stmt->execute([$noCarnet, $idDisp]);
-
-        if ($stmt->rowCount() === 0) {
-            http_response_code(409);
-            echo json_encode([
-                'exito' => false,
-                'mensaje' => 'La tutoría ya comenzó o no está disponible para nuevas solicitudes.'
-            ], JSON_UNESCAPED_UNICODE);
-            exit;
+        require_once __DIR__ . '/reglas_reserva.php';
+        require_once __DIR__ . '/../php/auditoria.php';
+        $pdo->beginTransaction();
+        // Bloqueo del estudiante: serializa sus reservas y evita cruces simultáneos.
+        $lockEstudiante = $pdo->prepare('SELECT noCarnetCompleto FROM tblEstudiantes WHERE noCarnetCompleto = ? FOR UPDATE');
+        $lockEstudiante->execute([$noCarnet]);
+        if (!$lockEstudiante->fetchColumn()) {
+            $pdo->rollBack(); http_response_code(403);
+            echo json_encode(['exito'=>false,'mensaje'=>'Perfil de estudiante no encontrado.']); exit;
         }
+        // Bloqueo del horario: evita sobrecupos cuando llegan varios estudiantes al mismo tiempo.
+        $lockHorario = $pdo->prepare('SELECT idDisponibilidad FROM tblDisponibilidad WHERE idDisponibilidad = ? FOR UPDATE');
+        $lockHorario->execute([$idDisp]);
+        if (!$lockHorario->fetchColumn()) {
+            $pdo->rollBack(); http_response_code(404);
+            echo json_encode(['exito'=>false,'mensaje'=>'Tutoría no encontrada.']); exit;
+        }
+        [$valido, $mensaje] = evaluarReserva($pdo, $noCarnet, $idDisp);
+        if (!$valido) {
+            $pdo->rollBack(); http_response_code(409);
+            echo json_encode(['exito'=>false,'mensaje'=>$mensaje], JSON_UNESCAPED_UNICODE); exit;
+        }
+        $stmt = $pdo->prepare("INSERT INTO tblSolicitudes (noCarnetEstudiante, idDisponibilidad, estadoSolicitud)
+            VALUES (?, ?, 'Pendiente')");
+        $stmt->execute([$noCarnet, $idDisp]);
+        $idSolicitudNueva = (string)$pdo->lastInsertId();
+        $pdo->commit();
+        registrarAuditoria($pdo, 'RESERVA_CREADA', 'solicitud', $idSolicitudNueva);
+        echo json_encode(['exito'=>true,'mensaje'=>'Solicitud enviada correctamente.'], JSON_UNESCAPED_UNICODE);
 
-        echo json_encode(['exito' => true, 'mensaje' => 'Solicitud enviada correctamente.'], JSON_UNESCAPED_UNICODE);
-    } catch (Exception $e) {
+    } catch (Throwable $e) {
+        if ($pdo->inTransaction()) $pdo->rollBack();
+        error_log('Error al registrar reserva: ' . $e->getMessage());
         http_response_code(500);
         echo json_encode(['exito' => false, 'mensaje' => 'No fue posible completar la operación.']);
     }
@@ -172,6 +182,8 @@ if ($metodo === 'GET') {
         $stmt = $pdo->prepare("UPDATE tblSolicitudes SET estadoSolicitud = ? WHERE idSolicitud = ?");
         $stmt->execute([$estado, $idSol]);
 
+        require_once __DIR__ . '/../php/auditoria.php';
+        registrarAuditoria($pdo, 'SOLICITUD_' . strtoupper($estado), 'solicitud', (string)$idSol);
         echo json_encode(['exito' => true, 'mensaje' => 'Estado de la solicitud actualizado a ' . $estado], JSON_UNESCAPED_UNICODE);
     } catch (Exception $e) {
         http_response_code(500);
