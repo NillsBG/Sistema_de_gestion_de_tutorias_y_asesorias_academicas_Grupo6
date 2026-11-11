@@ -16,7 +16,7 @@ async function cargarSolicitudesCuenta() {
         data.datos.forEach(s => {
             const fila = tbody.insertRow();
             const info = s.rolSolicitado === 'Estudiante'
-                ? `${s.noCarnetCompleto || ''} · ${s.nombreCarrera || ''}`
+                ? `Carné automático al aprobar · ${s.nombreCarrera || ''}`
                 : `${s.tituloProfesional || ''} · ${s.especialidad || ''}`;
             [s.username,s.nombreCompleto,s.rolSolicitado,info,s.correo,s.fechaSolicitud].forEach(v => {
                 fila.insertCell().textContent = v ?? '';
@@ -42,7 +42,7 @@ async function revisarSolicitudCuenta(id,accion) {
             body:JSON.stringify({idSolicitudCuenta:Number(id),accion})
         });
         const data = await res.json();
-        alert(data.mensaje || 'Operación no completada.');
+        alert((data.mensaje || 'Operación no completada.') + (data.carnetGenerado ? `\nCarné asignado: ${data.carnetGenerado}` : ''));
         if (data.exito) {
             await cargarSolicitudesCuenta();
             if (typeof cargarTutoresAdmin === 'function') cargarTutoresAdmin();

@@ -1,10 +1,12 @@
+-- INSTALACIÓN NUEVA: ejecutar en base vacía; no contiene DROP DATABASE.
+-- Si ya tienes datos, usa sql/ACTUALIZAR_BD_EXISTENTE.sql en su lugar.
+-- Cuentas demostrativas originales: hashes bcrypt, cambiar contraseñas antes de publicar.
 -- ==============================================================================
 -- SISTEMA DE GESTIÓN DE TUTORÍAS Y ASESORÍAS ACADÉMICAS - UMG
 -- BASE DE DATOS COMPLETA CON PENSUM DE INGENIERÍA EN SISTEMAS (0901)
 -- ==============================================================================
 
-DROP DATABASE IF EXISTS tutoria_umg;
-CREATE DATABASE tutoria_umg CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE DATABASE IF NOT EXISTS tutoria_umg CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 USE tutoria_umg;
 
 -- ------------------------------------------------------------------------------
@@ -29,15 +31,16 @@ CREATE TABLE tblUsuarios (
     idUsuario INT AUTO_INCREMENT PRIMARY KEY,
     username VARCHAR(100) NOT NULL UNIQUE,
     contrasena VARCHAR(255) NOT NULL,
+    correo VARCHAR(150) NULL UNIQUE,
     estado VARCHAR(20) DEFAULT 'Activo',
     creadoEn TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
 INSERT INTO tblUsuarios (idUsuario, username, contrasena) VALUES
-(1, 'nberducido', '1234'),
-(2, 'vchavez', 'Sarai'),
-(3, 'mcorzo', 'Mario26'),
-(4, 'admin', 'admin123');
+(1, 'nberducido', '$2y$12$beSuNAnUvcyGtduwLC4NgOd0u.mmSAQhVc0i35zVxCUPJJpl52k3a'),
+(2, 'vchavez', '$2y$12$c8ExYGlIzYxRjyEo7s6e8eP.mfKmhQ9isrhW4OTt6txgqAsH0hqA6'),
+(3, 'mcorzo', '$2y$12$HhUJnlt7olDllKyRmipVZODUeKXcL.B9H.MIu9YSKBihCaOl2SzpK'),
+(4, 'admin', '$2y$12$yrmDvXmaf2.DkKC/Qpqff..SMw0V5VmAlTFHuvPCeuTDbnDDSB8CC');
 
 -- ------------------------------------------------------------------------------
 -- 3. TABLA ASIGNACIÓN DE ROLES
@@ -238,3 +241,82 @@ INSERT INTO tblSolicitudes (noCarnetEstudiante, idDisponibilidad, estadoSolicitu
 ALTER TABLE tblDisponibilidad 
 ADD COLUMN fechaFin DATE NULL AFTER fecha,
 ADD COLUMN diasSeleccionados VARCHAR(100) NULL AFTER fechaFin;
+
+-- TABLAS DE SEGURIDAD Y REGISTRO INTEGRADAS
+-- Ejecutar UNA VEZ en la base de datos existente tutoria_umg.
+-- No elimina datos ni modifica otras tablas.
+
+CREATE TABLE IF NOT EXISTS tblIntentosLogin (
+    claveLimite CHAR(64) CHARACTER SET ascii COLLATE ascii_bin NOT NULL,
+    intentos INT UNSIGNED NOT NULL DEFAULT 0,
+    ventanaInicio DATETIME NOT NULL,
+    bloqueadoHasta DATETIME NULL,
+    actualizadoEn TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (claveLimite),
+    INDEX idxIntentosActualizado (actualizadoEn)
+) ENGINE=InnoDB;
+
+CREATE TABLE IF NOT EXISTS tblAuditoriaSeguridad (
+    idAuditoria BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    idUsuario INT NULL,
+    evento VARCHAR(60) NOT NULL,
+    entidad VARCHAR(60) NOT NULL,
+    idRegistro VARCHAR(100) NULL,
+    ipHash CHAR(64) NOT NULL,
+    ocurridoEn TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    INDEX idxAuditoriaFecha (ocurridoEn),
+    INDEX idxAuditoriaUsuario (idUsuario)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- ACTUALIZACIÓN INCREMENTAL: no elimina usuarios ni solicitudes actuales.
+-- Importar en phpMyAdmin sobre la base existente tutoria_umg.
+
+
+CREATE TABLE IF NOT EXISTS tblSolicitudesCuenta (
+    idSolicitudCuenta BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    username VARCHAR(100) NOT NULL,
+    contrasenaHash VARCHAR(255) NULL,
+    rolSolicitado ENUM('Estudiante','Tutor') NOT NULL,
+    nombreCompleto VARCHAR(100) NOT NULL,
+    correo VARCHAR(150) NOT NULL,
+    noCarnetCompleto VARCHAR(20) NULL,
+    idCarrera INT NULL,
+    tituloProfesional VARCHAR(100) NULL,
+    especialidad VARCHAR(100) NULL,
+    estadoSolicitud ENUM('Pendiente','Aprobada','Rechazada') NOT NULL DEFAULT 'Pendiente',
+    fechaSolicitud TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    fechaRevision DATETIME NULL,
+    idAdministradorRevisor INT NULL,
+    observacionRevision VARCHAR(300) NULL,
+    ipHash CHAR(64) NOT NULL,
+    PRIMARY KEY (idSolicitudCuenta),
+    UNIQUE KEY uqSolicitudUsername (username),
+    UNIQUE KEY uqSolicitudCorreo (correo),
+    KEY idxSolicitudEstado (estadoSolicitud,fechaSolicitud),
+    CONSTRAINT fkSolicitudCuentaCarrera FOREIGN KEY (idCarrera) REFERENCES tblCarreras (idCarrera),
+    CONSTRAINT fkSolicitudCuentaRevisor FOREIGN KEY (idAdministradorRevisor) REFERENCES tblUsuarios (idUsuario)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Limitar las peticiones públicas de registro (5/hora por IP).
+CREATE TABLE IF NOT EXISTS tblIntentosRegistro (
+    idIntento BIGINT UNSIGNED NOT NULL AUTO_INCREMENT PRIMARY KEY,
+    ipHash CHAR(64) NOT NULL,
+    realizadoEn TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    KEY idxRegistroIPFecha (ipHash,realizadoEn)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- Ejecutar en la base EXISTENTE. No borra cuentas ni solicitudes.
+
+
+CREATE TABLE IF NOT EXISTS tblCorrelativosCarnet (
+    idCarrera INT NOT NULL,
+    anioIngreso CHAR(2) NOT NULL,
+    ultimoCorrelativo BIGINT UNSIGNED NOT NULL DEFAULT 0,
+    PRIMARY KEY (idCarrera, anioIngreso),
+    CONSTRAINT fkCorrelativoCarrera FOREIGN KEY (idCarrera)
+        REFERENCES tblCarreras(idCarrera)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+
+-- No es necesario eliminar la columna noCarnetCompleto de tblSolicitudesCuenta;
+-- ahora permanece NULL hasta que el administrador aprueba. El carné final
+-- se almacena en tblEstudiantes.noCarnetCompleto.

@@ -62,19 +62,18 @@ try {
         $pdo->rollBack();
         responderCuentas(409,false,'La solicitud no tiene una contraseña segura.');
     }
+    // Impedir aprobar una solicitud cuyo correo ya pertenece a otra cuenta.
+    $correoEnUso = $pdo->prepare('SELECT idUsuario FROM tblUsuarios WHERE correo = ? LIMIT 1');
+    $correoEnUso->execute([$sol['correo']]);
+    if ($correoEnUso->fetchColumn()) {
+        $pdo->rollBack();
+        responderCuentas(409,false,'El correo ya está asociado a otra cuenta.');
+    }
     $existe = $pdo->prepare('SELECT idUsuario FROM tblUsuarios WHERE username = ? LIMIT 1');
     $existe->execute([$sol['username']]);
     if ($existe->fetchColumn()) {
         $pdo->rollBack();
         responderCuentas(409,false,'El usuario ya existe. Rechaza esta solicitud o revisa el registro.');
-    }
-    if ($sol['rolSolicitado'] === 'Estudiante') {
-        $car = $pdo->prepare('SELECT 1 FROM tblEstudiantes WHERE noCarnetCompleto = ? LIMIT 1');
-        $car->execute([$sol['noCarnetCompleto']]);
-        if ($car->fetchColumn()) {
-            $pdo->rollBack();
-            responderCuentas(409,false,'El carné ya se encuentra registrado.');
-        }
     }
     $rol = $pdo->prepare("SELECT idRol FROM tblRoles WHERE nombreRol = ? AND estadoRol = 'Activo' LIMIT 1");
     $rol->execute([$sol['rolSolicitado']]);
@@ -83,22 +82,42 @@ try {
         $pdo->rollBack();
         responderCuentas(409,false,'No existe el rol solicitado en la base de datos.');
     }
-    $usuario = $pdo->prepare("INSERT INTO tblUsuarios (username,contrasena,estado) VALUES (?,?,'Activo')");
-    $usuario->execute([$sol['username'], $sol['contrasenaHash']]);
+    $usuario = $pdo->prepare("INSERT INTO tblUsuarios (username,contrasena,correo,estado) VALUES (?,?,?,'Activo')");
+    $usuario->execute([$sol['username'], $sol['contrasenaHash'], $sol['correo']]);
     $idUsuario = (int)$pdo->lastInsertId();
     $pdo->prepare('INSERT INTO tblAsignacionRoles(idUsuario,idRol) VALUES (?,?)')->execute([$idUsuario,$idRol]);
     if ($sol['rolSolicitado'] === 'Estudiante') {
-        $partes = explode('-', $sol['noCarnetCompleto']);
+        // Se asigna un carné INTERNO al aprobar, no antes (solicitudes rechazadas no consumen números).
         $stmt = $pdo->prepare('SELECT codigoCarrera FROM tblCarreras WHERE idCarrera = ?');
-        $stmt->execute([$sol['idCarrera']]);
-        $codigoCarrera = $stmt->fetchColumn();
-        if (!$codigoCarrera || $codigoCarrera !== $partes[0]) {
-            throw new RuntimeException('Carrera y carné incompatibles.');
+        $stmt->execute([(int)$sol['idCarrera']]);
+        $codigoCarrera = (string)$stmt->fetchColumn();
+        if (!preg_match('/^\d{4}$/D', $codigoCarrera)) {
+            throw new RuntimeException('La carrera requiere un código de cuatro dígitos.');
         }
+        // Año de la solicitud, no de la aprobación, para evitar cambios en enero.
+        $anio = (new DateTimeImmutable((string)$sol['fechaSolicitud']))->format('y');
+        $idCarrera = (int)$sol['idCarrera'];
+        $pdo->prepare('INSERT IGNORE INTO tblCorrelativosCarnet (idCarrera, anioIngreso, ultimoCorrelativo) VALUES (?, ?, 0)')
+            ->execute([$idCarrera, $anio]);
+        $bloqueo = $pdo->prepare('SELECT ultimoCorrelativo FROM tblCorrelativosCarnet WHERE idCarrera = ? AND anioIngreso = ? FOR UPDATE');
+        $bloqueo->execute([$idCarrera, $anio]);
+        $ultimo = (int)$bloqueo->fetchColumn();
+        // Se respeta la numeración preexistente del mismo año y carrera.
+        $existentes = $pdo->prepare("SELECT COALESCE(MAX(CAST(correlativoCarnet AS UNSIGNED)), 0)
+            FROM tblEstudiantes WHERE codigoCarreraEstudiante = ? AND fechaInscripcion = ?
+            AND correlativoCarnet REGEXP '^[0-9]+$'");
+        $existentes->execute([$codigoCarrera, $anio]);
+        $ultimo = max($ultimo, (int)$existentes->fetchColumn());
+        $siguiente = $ultimo + 1;
+        if ($siguiente > 9999999999) throw new RuntimeException('Se agotó el rango de carnés.');
+        $correlativo = str_pad((string)$siguiente, 4, '0', STR_PAD_LEFT);
+        $carnet = $codigoCarrera . '-' . $anio . '-' . $correlativo;
+        $pdo->prepare('UPDATE tblCorrelativosCarnet SET ultimoCorrelativo = ? WHERE idCarrera = ? AND anioIngreso = ?')
+            ->execute([$siguiente, $idCarrera, $anio]);
         $stmt = $pdo->prepare('INSERT INTO tblEstudiantes
             (noCarnetCompleto,codigoCarreraEstudiante,fechaInscripcion,correlativoCarnet,idUsuario,nombreEstudiante,idCarrera)
             VALUES (?,?,?,?,?,?,?)');
-        $stmt->execute([$sol['noCarnetCompleto'],$partes[0],$partes[1],$partes[2],$idUsuario,$sol['nombreCompleto'],$sol['idCarrera']]);
+        $stmt->execute([$carnet,$codigoCarrera,$anio,(string)$siguiente,$idUsuario,$sol['nombreCompleto'],$idCarrera]);
     } else {
         $stmt = $pdo->prepare('INSERT INTO tblTutores (idUsuario,nombreTutor,tituloProfesional,especialidad) VALUES (?,?,?,?)');
         $stmt->execute([$idUsuario,$sol['nombreCompleto'],$sol['tituloProfesional'],$sol['especialidad']]);
@@ -108,7 +127,8 @@ try {
     $stmt->execute([(int)$_SESSION['idUsuario'],$observacion ?: null,$id]);
     $pdo->commit();
     registrarAuditoria($pdo,'CUENTA_APROBADA','usuario',(string)$idUsuario);
-    responderCuentas(200,true,'Cuenta aprobada y habilitada.');
+    responderCuentas(200,true,'Cuenta aprobada y habilitada.',
+        ['carnetGenerado' => $sol['rolSolicitado'] === 'Estudiante' ? $carnet : null]);
 } catch (Throwable $e) {
     if ($pdo->inTransaction()) $pdo->rollBack();
     error_log('Error revisando solicitud: '.$e->getMessage());

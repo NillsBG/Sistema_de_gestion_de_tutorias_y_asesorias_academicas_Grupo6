@@ -61,14 +61,15 @@
                     <div class="grupo-campo"><label class="etiqueta-campo" for="reg-nombre">Nombre completo</label>
                         <input class="campo-entrada" id="reg-nombre" maxlength="100" autocomplete="name" required></div>
                     <div class="grupo-campo"><label class="etiqueta-campo" for="reg-correo">Correo electrónico</label>
-                        <input class="campo-entrada" id="reg-correo" type="email" maxlength="150" autocomplete="email" required></div>
+                        <input class="campo-entrada" id="reg-correo" type="text" inputmode="email" maxlength="150" autocomplete="email" placeholder="nombre.apellido@miumg.edu.gt" required></div>
                     <div class="grupo-campo"><label class="etiqueta-campo" for="reg-usuario">Usuario</label>
-                        <input class="campo-entrada" id="reg-usuario" minlength="4" maxlength="100" pattern="[A-Za-z0-9._-]+" autocomplete="username" required></div>
+                        <input class="campo-entrada" id="reg-usuario" minlength="4" maxlength="100" autocomplete="username" autocapitalize="characters" style="text-transform:uppercase" required></div>
                     <div id="campos-estudiante">
-                        <div class="grupo-campo"><label class="etiqueta-campo" for="reg-carnet">Carné completo (ej. 0901-23-12345)</label>
-                            <input class="campo-entrada" id="reg-carnet" maxlength="20" required></div>
                         <div class="grupo-campo"><label class="etiqueta-campo" for="reg-carrera">Carrera</label>
                             <select class="campo-entrada" id="reg-carrera" required><option value="">Cargando carreras...</option></select></div>
+                        <div class="grupo-campo"><label class="etiqueta-campo" for="reg-carnet">Carné generado automáticamente</label>
+                            <input class="campo-entrada" id="reg-carnet" value="Selecciona una carrera" readonly style="background:#f1efe9;" aria-describedby="reg-ayuda-carnet">
+                            <small id="reg-ayuda-carnet" style="display:block;margin-top:.3rem;">Se asignará al aprobar la solicitud: código de carrera + año + correlativo. El número definitivo puede variar.</small></div>
                     </div>
                     <div id="campos-tutor" style="display:none;">
                         <div class="grupo-campo"><label class="etiqueta-campo" for="reg-titulo">Título profesional</label>
@@ -76,10 +77,10 @@
                         <div class="grupo-campo"><label class="etiqueta-campo" for="reg-especialidad">Especialidad</label>
                             <input class="campo-entrada" id="reg-especialidad" maxlength="100"></div>
                     </div>
-                    <div class="grupo-campo"><label class="etiqueta-campo" for="reg-clave">Contraseña nueva (mínimo 12 caracteres, letras y números)</label>
-                        <input class="campo-entrada" id="reg-clave" type="password" minlength="12" maxlength="72" autocomplete="new-password" required></div>
+                    <div class="grupo-campo"><label class="etiqueta-campo" for="reg-clave">Contraseña nueva (mínimo 8 caracteres; recomendamos 12 o más)</label>
+                        <input class="campo-entrada" id="reg-clave" type="password" minlength="8" maxlength="72" autocomplete="new-password" required></div>
                     <div class="grupo-campo"><label class="etiqueta-campo" for="reg-confirmar">Confirmar contraseña</label>
-                        <input class="campo-entrada" id="reg-confirmar" type="password" minlength="12" maxlength="72" autocomplete="new-password" required></div>
+                        <input class="campo-entrada" id="reg-confirmar" type="password" minlength="8" maxlength="72" autocomplete="new-password" required></div>
                     <button type="submit" class="btn btn-oro ancho-total mt-sm">Enviar solicitud de cuenta</button>
                     <button type="button" class="btn btn-secundario ancho-total mt-sm" onclick="mostrarRegistro(false)">Volver al inicio de sesión</button>
                 </form>
