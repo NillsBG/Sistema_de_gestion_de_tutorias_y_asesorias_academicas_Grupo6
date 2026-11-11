@@ -3,9 +3,6 @@
 // Los días se guardan en los campos fechaFin y diasSeleccionados de la BD original.
 
 date_default_timezone_set('America/Guatemala');
-if (session_status() === PHP_SESSION_NONE) {
-    session_start();
-}
 header('Content-Type: application/json; charset=utf-8');
 
 require_once __DIR__ . '/../php/auth_middleware.php';
@@ -273,6 +270,8 @@ if ($metodo === 'POST' || $metodo === 'PUT') {
                 WHERE idDisponibilidad = ?
             ");
             $stmt->execute([$fecha, $fechaFin, $diasTexto, $horas[0], $horas[1], $duracion, $idDisp]);
+            require_once __DIR__ . '/../php/auditoria.php';
+            registrarAuditoria($pdo, 'TUTORIA_MODIFICADA', 'disponibilidad', (string)$idDisp);
             responder(['exito' => true, 'mensaje' => 'Tutoría modificada exitosamente.']);
         }
 
@@ -300,6 +299,8 @@ if ($metodo === 'POST' || $metodo === 'PUT') {
             $idTutor, $idCurso, $curso['nombreCurso'], $fecha, $fechaFin,
             $diasTexto, $horas[0], $horas[1], $duracion
         ]);
+        require_once __DIR__ . '/../php/auditoria.php';
+        registrarAuditoria($pdo, 'TUTORIA_CREADA', 'disponibilidad', (string)$pdo->lastInsertId());
         responder(['exito' => true, 'mensaje' => 'Se publicó la tutoría con todos los días seleccionados.']);
     } catch (Exception $e) {
         responder(['exito' => false, 'mensaje' => 'No fue posible completar la operación.'], 500);
@@ -341,6 +342,8 @@ if ($metodo === 'DELETE') {
 
         $stmtD = $pdo->prepare("DELETE FROM tblDisponibilidad WHERE idDisponibilidad = ?");
         $stmtD->execute([$idDisp]);
+        require_once __DIR__ . '/../php/auditoria.php';
+        registrarAuditoria($pdo, 'TUTORIA_ELIMINADA', 'disponibilidad', (string)$idDisp);
         responder(['exito' => true, 'mensaje' => 'Tutoría eliminada exitosamente.']);
     } catch (Exception $e) {
         responder(['exito' => false, 'mensaje' => 'No fue posible completar la operación.'], 500);

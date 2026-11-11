@@ -28,6 +28,9 @@ verificarRol(['Tutor', 'Administrador']);
         <div class="barra-usuario">
             <span class="nombre-usuario"><i class="fa-solid fa-chalkboard-user"></i> <?php echo htmlspecialchars($_SESSION['nombre']); ?></span>
             <span class="badge-rol badge-tutor">Tutor Docente</span>
+            <button type="button" onclick="abrirCambioContrasena()" class="btn btn-secundario">
+                <i class="fa-solid fa-key"></i> Cambiar contraseña
+            </button>
             <button type="button" onclick="cerrarSesion()" class="btn btn-secundario">
                 <i class="fa-solid fa-right-from-bracket"></i> Salir
             </button>
@@ -156,5 +159,6 @@ verificarRol(['Tutor', 'Administrador']);
     <script src="js/seguridad_fetch.js"></script>
     <script src="js/tutor.js"></script>
     <script src="js/actividad_sesion.js"></script>
+    <script src="js/cambiar_contrasena.js"></script>
 </body>
 </html>

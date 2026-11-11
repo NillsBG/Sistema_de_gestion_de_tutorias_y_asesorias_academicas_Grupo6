@@ -89,6 +89,8 @@ if ($metodo === 'GET') {
         $stmt = $pdo->prepare("INSERT IGNORE INTO tblTutorCursos (idTutor, idCurso) VALUES (?, ?)");
         $stmt->execute([$idTutor, $idCurso]);
 
+        require_once __DIR__ . '/../php/auditoria.php';
+        registrarAuditoria($pdo, 'CURSO_ASIGNADO', 'tutor_curso', $idTutor . ':' . $idCurso);
         echo json_encode(['exito' => true, 'mensaje' => 'Curso asignado al tutor exitosamente.']);
     } catch (Exception $e) {
         echo json_encode(['exito' => false, 'mensaje' => 'No fue posible completar la operación.']);
@@ -103,6 +105,8 @@ if ($metodo === 'GET') {
         $stmt = $pdo->prepare("DELETE FROM tblTutorCursos WHERE idTutor = ? AND idCurso = ?");
         $stmt->execute([$idTutor, $idCurso]);
 
+        require_once __DIR__ . '/../php/auditoria.php';
+        registrarAuditoria($pdo, 'CURSO_DESASIGNADO', 'tutor_curso', $idTutor . ':' . $idCurso);
         echo json_encode(['exito' => true, 'mensaje' => 'Asignación eliminada exitosamente.']);
     } catch (Exception $e) {
         echo json_encode(['exito' => false, 'mensaje' => 'No fue posible completar la operación.']);
