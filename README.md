@@ -21,5 +21,5 @@
 ---
 
 ## Credenciales de Prueba
-* **Tutor:** `ldominguez@umg.edu.gt` / `123456`
-* **Estudiante:** `mcorzo@umg.edu.gt` / `123456`
+* **Tutor:** `nberducido` / `1234`
+* **Estudiante:** `mcorzo` / `Mario26`
