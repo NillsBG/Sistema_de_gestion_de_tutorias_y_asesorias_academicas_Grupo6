@@ -35,16 +35,48 @@ function formatearHora(horaStr) {
 
 async function cargarDisponibilidadEstudiante() {
     try {
-        const respuesta = await fetchSeguro('api/disponibilidad.php', { cache: 'no-store' });
-        const resultado = await respuesta.json();
-
-        if (resultado.exito && Array.isArray(resultado.datos)) {
-            listaDisponibilidadGlobal = resultado.datos;
-            poblarSelectMateriasCarrera(listaDisponibilidadGlobal);
-            aplicarFiltrosDisponibilidadEstudiante();
+        // Consulta actual desde MySQL, no únicamente desde el distintivo de la página.
+        const sesResp = await fetchSeguro('php/session_check.php?carrera_v=2', { cache: 'no-store' });
+        const sesData = await sesResp.json();
+        if (!sesResp.ok || !sesData.autenticado || !sesData.usuario) {
+            throw new Error('La sesión ha expirado. Vuelve a iniciar sesión.');
         }
+        const codigoActual = String(sesData.usuario.codigoCarrera || '').trim();
+        if (!codigoActual) throw new Error('No fue posible determinar la carrera del estudiante.');
+
+        const respuesta = await fetchSeguro('api/disponibilidad.php?carrera_v=2', { cache: 'no-store' });
+        const resultado = await respuesta.json();
+        if (!respuesta.ok || !resultado.exito || !Array.isArray(resultado.datos)) {
+            throw new Error(resultado.mensaje || 'No se pudo consultar la disponibilidad.');
+        }
+        const carreraServidor = String(resultado.carreraActual?.codigoCarrera || '').trim();
+        if (carreraServidor && carreraServidor !== codigoActual) {
+            throw new Error('La carrera de la sesión y de la API no coincide. Recarga e inicia sesión de nuevo.');
+        }
+        const badge = document.getElementById('badge-carrera-texto');
+        const nuevaEtiqueta = carreraServidor && resultado.carreraActual.nombreCarrera
+            ? `${carreraServidor} - ${resultado.carreraActual.nombreCarrera}`
+            : `${codigoActual} - ${sesData.usuario.nombreCarrera || ''}`;
+        if (badge && badge.textContent.trim() !== nuevaEtiqueta.trim()) {
+            badge.textContent = nuevaEtiqueta;
+            const materia = document.getElementById('filtrar-materia');
+            if (materia) materia.value = '';
+            carruselPosicionActual = 0;
+        }
+        // Defensa adicional en el cliente. La seguridad real se aplica en PHP.
+        listaDisponibilidadGlobal = resultado.datos.filter(item =>
+            String(item.codigoCarrera || '').trim() === codigoActual
+        );
+        poblarSelectMateriasCarrera(listaDisponibilidadGlobal);
+        aplicarFiltrosDisponibilidadEstudiante();
     } catch (e) {
         console.error('Error al cargar disponibilidad:', e);
+        // No mostrar tarjetas antiguas si la petición falla.
+        listaDisponibilidadGlobal = [];
+        poblarSelectMateriasCarrera([]);
+        aplicarFiltrosDisponibilidadEstudiante();
+        const contenedor = document.getElementById('contenedor-disponibilidad');
+        if (contenedor) contenedor.textContent = 'No se pudo actualizar la oferta de tutorías. Recarga la página o vuelve a iniciar sesión.';
     }
 }
 

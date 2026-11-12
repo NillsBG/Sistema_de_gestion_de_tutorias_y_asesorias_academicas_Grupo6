@@ -30,6 +30,12 @@ if ($metodo === 'POST') {
     }
     registrarActividadReal();
 }
+if (strtolower((string)($_SESSION['rol'] ?? '')) === 'estudiante') {
+    require_once __DIR__ . '/../api/conexion.php';
+    require_once __DIR__ . '/auth_middleware.php';
+    require_once __DIR__ . '/perfil_estudiante_actual.php';
+    perfilEstudianteActual($pdo);
+}
 echo json_encode([
     'autenticado' => true,
     'tiempoInactividadSegundos' => TIEMPO_INACTIVIDAD,

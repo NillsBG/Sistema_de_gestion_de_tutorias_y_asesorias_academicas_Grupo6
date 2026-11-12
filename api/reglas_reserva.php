@@ -39,6 +39,15 @@ function evaluarReserva(PDO $pdo, string $carnet, int $idDisp): array {
     $stmt->execute([$idDisp]);
     $solicitada = $stmt->fetch(PDO::FETCH_ASSOC);
     if (!$solicitada) return [false, 'La tutoría no existe.'];
+    // Regla obligatoria: no permitir reservar tutorías de otra carrera, ni con petición manual.
+    $coincideCarrera = $pdo->prepare("SELECT COUNT(*)
+        FROM tblEstudiantes e
+        INNER JOIN tblDisponibilidad d ON d.idDisponibilidad = ?
+        INNER JOIN tblCursos c ON c.idCurso = d.idCurso
+        WHERE e.noCarnetCompleto = ? AND e.idCarrera = c.idCarrera");
+    $coincideCarrera->execute([$idDisp, $carnet]);
+    if ((int)$coincideCarrera->fetchColumn() === 0)
+        return [false, 'Solo puedes reservar tutorías de tu carrera actual.'];
     if ($solicitada['estadoDisponibilidad'] !== 'disponible' || !(int)$solicitada['vigente'])
         return [false, 'La tutoría ya comenzó o no está disponible.'];
     $stmt = $pdo->prepare("SELECT COUNT(*) FROM tblSolicitudes
