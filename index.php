@@ -1,29 +1,28 @@
 <?php
-// index.php - Enrutador Principal Basado en Roles (Server-Side Architecture)
-require_once __DIR__ . '/php/auth_middleware.php';
+// index.php - Enrutador Principal con Control de Sesiones e Inactividad
+require_once __DIR__ . '/php/seguridad_sesion.php';
 require_once __DIR__ . '/php/csrf.php';
 
-$rol = strtolower($_SESSION['rol'] ?? '');
+iniciarSesionSegura();
 
-if (!isset($_SESSION['idUsuario']) || empty($rol)) {
-    include 'vistas/login.php';
-    exit;
+$idUsuario = $_SESSION['idUsuario'] ?? null;
+$rol       = strtolower(trim((string)($_SESSION['rol'] ?? '')));
+
+if ($rol === 'admin') $rol = 'administrador';
+
+if ($idUsuario && !empty($rol)) {
+    if ($rol === 'administrador') {
+        include __DIR__ . '/vistas/admin.php';
+        exit;
+    } elseif ($rol === 'tutor') {
+        include __DIR__ . '/vistas/tutor.php';
+        exit;
+    } elseif ($rol === 'estudiante') {
+        include __DIR__ . '/vistas/estudiante.php';
+        exit;
+    }
 }
 
-switch ($rol) {
-    case 'estudiante':
-        include 'vistas/estudiante.php';
-        break;
-    case 'tutor':
-        include 'vistas/tutor.php';
-        break;
-    case 'administrador':
-    case 'admin':
-        include 'vistas/admin.php';
-        break;
-    default:
-        destruirSesionSegura();
-        include 'vistas/login.php';
-        break;
-}
+// Si no hay sesión, muestra el Login
+include __DIR__ . '/vistas/login.php';
 ?>
