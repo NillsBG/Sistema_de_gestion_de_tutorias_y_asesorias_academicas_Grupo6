@@ -4,6 +4,7 @@
 
 date_default_timezone_set('America/Guatemala');
 header('Content-Type: application/json; charset=utf-8');
+header('Cache-Control: no-store, no-cache, must-revalidate, max-age=0');
 
 require_once __DIR__ . '/../php/auth_middleware.php';
 verificarRol(['Administrador', 'Tutor', 'Estudiante']);
@@ -149,9 +150,21 @@ $metodo = $_SERVER['REQUEST_METHOD'];
 
 if ($metodo === 'GET') {
     try {
-        $codigoCarrera = trim($_GET['codigoCarrera'] ?? '');
+        $codigoCarrera = trim((string)($_GET['codigoCarrera'] ?? ''));
         $idTutor = (int)($_GET['idTutor'] ?? 0);
-        if ($rolSesion === 'tutor') $idTutor = tutorSesion();
+        $perfilEstudiante = null;
+        $idCarreraEstudiante = 0;
+        if ($rolSesion === 'estudiante') {
+            // El estudiante SOLO puede ver las materias de su carrera actual.
+            // Se consulta MySQL cada vez, incluso si cambió de carrera con la sesión abierta.
+            require_once __DIR__ . '/../php/perfil_estudiante_actual.php';
+            $perfilEstudiante = perfilEstudianteActual($pdo);
+            $codigoCarrera = (string)$perfilEstudiante['codigoCarrera'];
+            $idCarreraEstudiante = (int)$perfilEstudiante['idCarrera'];
+            $idTutor = 0; // El estudiante puede filtrar por tutor desde la interfaz, no cambiar de carrera.
+        } elseif ($rolSesion === 'tutor') {
+            $idTutor = tutorSesion();
+        }
 
         $sql = "
             SELECT DISTINCT
@@ -182,6 +195,12 @@ if ($metodo === 'GET') {
         ";
 
         $params = [];
+        if ($rolSesion === 'estudiante') {
+            // Filtro obligatorio del lado del servidor, no del navegador.
+            $sql .= ' AND cur.idCarrera = :idCarreraSesion';
+            $params[':idCarreraSesion'] = $idCarreraEstudiante;
+            $codigoCarrera = '';
+        }
         if ($codigoCarrera !== '') {
             $sql .= " AND c.codigoCarrera = :codCarrera";
             $params[':codCarrera'] = $codigoCarrera;
@@ -207,7 +226,15 @@ if ($metodo === 'GET') {
         }
         unset($fila);
 
-        responder(['exito' => true, 'datos' => $resultados]);
+        $respuesta = ['exito' => true, 'datos' => $resultados];
+        if ($perfilEstudiante !== null) {
+            $respuesta['carreraActual'] = [
+                'idCarrera' => (int)$perfilEstudiante['idCarrera'],
+                'codigoCarrera' => $perfilEstudiante['codigoCarrera'],
+                'nombreCarrera' => $perfilEstudiante['nombreCarrera'],
+            ];
+        }
+        responder($respuesta);
     } catch (Exception $e) {
         responder(['exito' => false, 'mensaje' => 'No fue posible completar la operación.'], 500);
     }

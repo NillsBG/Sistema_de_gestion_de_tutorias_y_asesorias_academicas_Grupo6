@@ -132,7 +132,7 @@ verificarRol(['Estudiante']);
     </footer>
 
     <script src="js/seguridad_fetch.js"></script>
-    <script src="js/estudiante.js"></script>
+    <script src="js/estudiante.js?v=carrera0906_20261111_2"></script>
     <script src="js/actividad_sesion.js"></script>
     <script src="js/cambiar_contrasena.js"></script>
 </body>

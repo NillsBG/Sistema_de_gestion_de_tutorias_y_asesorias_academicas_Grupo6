@@ -22,8 +22,11 @@ if ($metodo === 'GET') {
         $noCarnet = trim($_GET['noCarnetEstudiante'] ?? '');
         $idTutor  = (int)($_GET['idTutor'] ?? 0);
         $soloActivas = (int)($_GET['soloActivas'] ?? 0);
+        $perfilEstudiante = null;
         if (rolActual() === 'estudiante') {
-            $noCarnet = carnetSesion();
+            require_once __DIR__ . '/../php/perfil_estudiante_actual.php';
+            $perfilEstudiante = perfilEstudianteActual($pdo);
+            $noCarnet = (string)$perfilEstudiante['noCarnetCompleto'];
             $idTutor = 0;
         } elseif (rolActual() === 'tutor') {
             $noCarnet = '';
@@ -59,6 +62,13 @@ if ($metodo === 'GET') {
         ";
 
         $params = [];
+        if ($perfilEstudiante !== null) {
+            // Los registros de la carrera anterior quedan en MySQL como historial, pero
+            // no se ofrecen como tutorías vigentes de la carrera actual.
+            $sql .= " AND EXISTS (SELECT 1 FROM tblCursos cursoActual
+                       WHERE cursoActual.idCurso = d.idCurso AND cursoActual.idCarrera = :carreraActual)";
+            $params[':carreraActual'] = (int)$perfilEstudiante['idCarrera'];
+        }
         if (!empty($noCarnet)) {
             $sql .= " AND s.noCarnetEstudiante = :carnet";
             $params[':carnet'] = $noCarnet;
@@ -89,7 +99,9 @@ if ($metodo === 'GET') {
     verificarRol(['Estudiante']);
     try {
         $input = json_decode(file_get_contents('php://input'), true) ?? $_POST;
-        $noCarnet = carnetSesion();
+        require_once __DIR__ . '/../php/perfil_estudiante_actual.php';
+        $perfilEstudiante = perfilEstudianteActual($pdo);
+        $noCarnet = (string)$perfilEstudiante['noCarnetCompleto'];
         $idDisp   = (int)($input['idDisponibilidad'] ?? 0);
 
         if (empty($noCarnet) || $idDisp <= 0) {
@@ -161,7 +173,9 @@ if ($metodo === 'GET') {
             exit;
         }
         if (rolActual() === 'estudiante') {
-            if ($actual['noCarnetEstudiante'] !== carnetSesion() || $estado !== 'Cancelada') {
+            require_once __DIR__ . '/../php/perfil_estudiante_actual.php';
+            $perfilEstudiante = perfilEstudianteActual($pdo);
+            if ($actual['noCarnetEstudiante'] !== $perfilEstudiante['noCarnetCompleto'] || $estado !== 'Cancelada') {
                 errorAcceso(403, 'Solo puedes cancelar tus propias solicitudes.');
             }
             if ($actual['estadoSolicitud'] !== 'Pendiente') {

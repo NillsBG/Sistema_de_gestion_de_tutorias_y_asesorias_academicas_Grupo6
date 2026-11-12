@@ -14,7 +14,9 @@ $pdo->exec("SET time_zone = '-06:00'");
 $entrada = json_decode(file_get_contents('php://input'), true);
 if (!is_array($entrada)) $entrada = $_POST;
 try {
-    [$valido, $mensaje] = evaluarReserva($pdo, carnetSesion(), (int)($entrada['idDisponibilidad'] ?? 0));
+    require_once __DIR__ . '/../php/perfil_estudiante_actual.php';
+    $perfilEstudiante = perfilEstudianteActual($pdo);
+    [$valido, $mensaje] = evaluarReserva($pdo, (string)$perfilEstudiante['noCarnetCompleto'], (int)($entrada['idDisponibilidad'] ?? 0));
     echo json_encode(['valido'=>$valido,'mensaje'=>$mensaje], JSON_UNESCAPED_UNICODE);
 } catch (Throwable $e) {
     error_log('Error prevalidación reserva: ' . $e->getMessage());
